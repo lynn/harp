@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>harp</title>
+    <script type="text/javascript">
+      const ctx = new AudioContext();
+      const pointers = new Map();
+      const pi = Math.PI;
+
+      function parseNote(note) {
+        const t =
+          "G A BC D EF".indexOf(note.charAt(0)) -
+          2 -
+          !!note.match(/♭/) +
+          !!note.match(/♯/);
+        return 220 * 2 ** (t / 12);
+      }
+
+      window.addEventListener("DOMContentLoaded", (event) => {
+        const tonnetz = document.querySelector(".tonnetz");
+        const toneButtons = [...document.querySelectorAll(".tonnetz .button")];
+        tonnetz.addEventListener("pointerdown", (e) => {
+          if (!e.target.className.includes("button")) return;
+          console.log(e.pointerId, e.target);
+          e.target.style.background = "blue";
+          const rect = e.target.getBoundingClientRect();
+          pointers.set(e.pointerId, {
+            centerX: rect.left + rect.width / 2,
+            centerY: rect.top + rect.height / 2,
+            note: e.target.innerText,
+            target: e.target,
+            oscs: [],
+          });
+        });
+
+        tonnetz.addEventListener("pointermove", (e) => {
+          const p = pointers.get(e.pointerId);
+          if (!p) return;
+          const dx = e.clientX - p.centerX;
+          const dy = e.clientY - p.centerY;
+          if (Math.hypot(dx, dy) > 30) {
+            const a = Math.atan2(dy, dx);
+            const seg = Math.floor(((a + pi) / (2 * pi)) * 4 + 0.5) % 4;
+            const chords = [
+              [0, 12, 16, 19],
+              [0, 12, 15, 19],
+              [0, 10, 16, 19],
+              [0, 10, 15, 19],
+            ];
+            const base = parseNote(p.note);
+            const chord = chords[seg];
+            while (p.oscs.length < chord.length) {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              gain.gain.value = 0.2;
+              osc.type = "triangle";
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start();
+              p.oscs.push(osc);
+            }
+            while (p.oscs.length > chord.length) {
+              p.oscs.pop();
+            }
+            for (let i = 0; i < chord.length; i++) {
+              p.oscs[i].frequency.value = base * 2 ** (chord[i] / 12);
+              // p.oscs[i].start();
+            }
+            p.target.style.background = "red";
+          } else {
+            for (const osc of p.oscs) osc.stop();
+            p.oscs = [];
+            p.target.style.background = "blue";
+          }
+        });
+        function stop(pointerId) {
+          const p = pointers.get(pointerId);
+          if (!p) return;
+          for (const osc of p.oscs) {
+            console.log("stopping p.osc");
+            osc.stop();
+          }
+          p.target.style.background = "";
+          pointers.delete(pointerId);
+          // console.log("stop", pointerId);
+        }
+        tonnetz.addEventListener("pointerup", (e) => stop(e.pointerId));
+        tonnetz.addEventListener(
+          "pointerleave",
+          (e) => e.target.className.includes("button") || stop(e.pointerId)
+        );
+      });
+    </script>
+    <style type="text/css">
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        height: 100%;
+        width: 100%;
+      }
+      body {
+        background-color: lavender;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+      .controls {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+      }
+      .modifiers {
+        background: rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .tonnetz {
+        background: rgba(0, 0, 0, 0.1);
+        padding: 20px 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .tonnetz-row {
+        display: flex;
+        flex-direction: row;
+      }
+      .tonnetz-row:nth-of-type(2) {
+        padding-right: 20px;
+      }
+      .tonnetz-row:nth-of-type(3) {
+        padding-right: 40px;
+      }
+      .button {
+        height: 100px;
+        width: 100px;
+        border-radius: 100px;
+        background-color: grey;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+        font-size: 50px;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="controls">
+      <div class="modifiers">
+        <div class="button">&flat;5</div>
+        <div class="button">&sharp;5</div>
+      </div>
+      <div class="tonnetz">
+        <div class="tonnetz-row">
+          <div class="button">D&flat;</div>
+          <div class="button">A&flat;</div>
+          <div class="button">E&flat;</div>
+          <div class="button">B&flat;</div>
+        </div>
+        <div class="tonnetz-row">
+          <div class="button">F</div>
+          <div class="button">C</div>
+          <div class="button">G</div>
+          <div class="button">D</div>
+        </div>
+        <div class="tonnetz-row">
+          <div class="button">A</div>
+          <div class="button">E</div>
+          <div class="button">B</div>
+          <div class="button">F&sharp;</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
