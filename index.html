@@ -1,190 +1,324 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>harp</title>
-    <script type="text/javascript">
-      const ctx = new AudioContext();
-      const pointers = new Map();
-      const pi = Math.PI;
 
-      function parseNote(note) {
-        const t =
-          "G A BC D EF".indexOf(note.charAt(0)) -
-          2 -
-          !!note.match(/♭/) +
-          !!note.match(/♯/);
-        return 220 * 2 ** (t / 12);
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>harp</title>
+  <script type="text/javascript">
+    const ctx = new AudioContext();
+    const pointers = new Map();
+    const pi = Math.PI;
+    let currentBass = 220.0;
+    function cf(note) {
+      let k = currentBass * 2 ** (note / 12);
+      console.log(k);
+      if (k < 300) k *= 2;
+      if (k > 600) k /= 2;
+      return k;
+    }
+
+    function noteNameToFrequency(note) {
+      const i = " D EF G A BC".indexOf(note.charAt(0)) - 8;
+      const j = i + !!note.match(/♯/) - !!note.match(/♭/);
+      return 220 * 2 ** (j / 12);
+    }
+
+    window.addEventListener("DOMContentLoaded", (event) => {
+      const bass = document.querySelector(".bass");
+      const bassButtons = [...document.querySelectorAll(".bass-button")];
+      for (const b of bassButtons) {
+        b.addEventListener("pointerdown", (e) => { });
+        b.addEventListener("pointermove", (e) => { });
       }
+      bass.addEventListener("pointerdown", (e) => {
+        if (!e.target.className.includes("button")) return;
+        console.log(e.pointerId, e.target);
+        const rect = e.target.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.2;
+        osc.type = "triangle";
+        osc.connect(gain);
+        osc.gainNode = gain;
+        gain.connect(ctx.destination);
+        const note = noteNameToFrequency(e.target.innerText);
+        const fifthBelow = e.clientY > rect.top + rect.height * 0.65;
+        e.target.style.background = fifthBelow ? "linear-gradient(to bottom, #a99 65%, #f80 65%)" : "linear-gradient(to bottom, #f80 65%, #777 65%)";
+        osc.frequency.value = note * (fifthBelow ? 0.375 : 0.5);
+        osc.start();
+        currentBass = note;
 
-      window.addEventListener("DOMContentLoaded", (event) => {
-        const tonnetz = document.querySelector(".tonnetz");
-        const toneButtons = [...document.querySelectorAll(".tonnetz .button")];
-        tonnetz.addEventListener("pointerdown", (e) => {
-          if (!e.target.className.includes("button")) return;
-          console.log(e.pointerId, e.target);
-          e.target.style.background = "blue";
+        pointers.set(e.pointerId, {
+          centerX: centerX,
+          centerY: centerY,
+          note: e.target.innerText,
+          target: e.target,
+          oscs: [osc],
+        });
+
+        for (const v of pointers.values()) {
+          if (v.voicing) {
+            for (let i = 0; i < v.voicing.length; i++) {
+              v.oscs[i].frequency.value = cf(v.voicing[i]);
+            }
+          }
+        }
+      });
+
+      bass.addEventListener("pointermove", (e) => {
+        // const p = pointers.get(e.pointerId);
+        // if (!p) return;
+        // const dx = e.clientX - p.centerX;
+        // const dy = e.clientY - p.centerY;
+        // if (Math.hypot(dx, dy) > 30) {
+        //   const a = Math.atan2(dy, dx);
+        //   const seg = Math.floor(((a + pi) / (2 * pi)) * 4 + 0.5) % 4;
+        //   const chords = [
+        //     [0, 12, 16, 19],
+        //     [0, 12, 15, 19],
+        //     [0, 10, 16, 19],
+        //     [0, 10, 15, 19],
+        //   ];
+        //   const base = noteNameToFrequency(p.note);
+        //   const chord = chords[seg];
+        //   while (p.oscs.length < chord.length) {
+        //     const osc = ctx.createOscillator();
+        //     const gain = ctx.createGain();
+        //     gain.gain.value = 0.2;
+        //     osc.type = "triangle";
+        //     osc.connect(gain);
+        //     gain.connect(ctx.destination);
+        //     osc.start();
+        //     p.oscs.push(osc);
+        //   }
+        //   while (p.oscs.length > chord.length) {
+        //     p.oscs.pop();
+        //   }
+        //   for (let i = 0; i < chord.length; i++) {
+        //     p.oscs[i].frequency.value = base * 2 ** (chord[i] / 12);
+        //     // p.oscs[i].start();
+        //   }
+        //   p.target.style.background = "red";
+        // } else {
+        //   for (const osc of p.oscs) osc.stop();
+        //   p.oscs = [];
+        //   p.target.style.background = "blue";
+        // }
+      });
+      function stop(pointerId) {
+        const p = pointers.get(pointerId);
+        if (!p) return;
+        for (const osc of p.oscs) {
+          console.log("stopping p.osc");
+          osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.005)
+          osc.stop(ctx.currentTime + 1);
+        }
+        p.target.style.background = "";
+        pointers.delete(pointerId);
+        // console.log("stop", pointerId);
+      }
+      bass.addEventListener("pointerup", (e) => stop(e.pointerId));
+      bass.addEventListener(
+        "pointerleave",
+        (e) => e.target.className.includes("button") || stop(e.pointerId)
+      );
+
+      const chordButtons = [...document.querySelectorAll(".chord-button")];
+      for (const b of chordButtons) {
+        const voicing = b.attributes["data-chord"].value.split(" ");
+        b.addEventListener("pointerdown", (e) => {
+          e.target.style.background = "#f80";
           const rect = e.target.getBoundingClientRect();
           pointers.set(e.pointerId, {
             centerX: rect.left + rect.width / 2,
             centerY: rect.top + rect.height / 2,
             note: e.target.innerText,
             target: e.target,
-            oscs: [],
-          });
-        });
-
-        tonnetz.addEventListener("pointermove", (e) => {
-          const p = pointers.get(e.pointerId);
-          if (!p) return;
-          const dx = e.clientX - p.centerX;
-          const dy = e.clientY - p.centerY;
-          if (Math.hypot(dx, dy) > 30) {
-            const a = Math.atan2(dy, dx);
-            const seg = Math.floor(((a + pi) / (2 * pi)) * 4 + 0.5) % 4;
-            const chords = [
-              [0, 12, 16, 19],
-              [0, 12, 15, 19],
-              [0, 10, 16, 19],
-              [0, 10, 15, 19],
-            ];
-            const base = parseNote(p.note);
-            const chord = chords[seg];
-            while (p.oscs.length < chord.length) {
+            voicing: voicing,
+            oscs: voicing.map(i => {
               const osc = ctx.createOscillator();
               const gain = ctx.createGain();
               gain.gain.value = 0.2;
               osc.type = "triangle";
               osc.connect(gain);
+              osc.gainNode = gain;
               gain.connect(ctx.destination);
+              osc.frequency.value = cf(i);
               osc.start();
-              p.oscs.push(osc);
-            }
-            while (p.oscs.length > chord.length) {
-              p.oscs.pop();
-            }
-            for (let i = 0; i < chord.length; i++) {
-              p.oscs[i].frequency.value = base * 2 ** (chord[i] / 12);
-              // p.oscs[i].start();
-            }
-            p.target.style.background = "red";
-          } else {
-            for (const osc of p.oscs) osc.stop();
-            p.oscs = [];
-            p.target.style.background = "blue";
-          }
+              console.log(osc);
+              return osc;
+            }),
+          });
         });
-        function stop(pointerId) {
-          const p = pointers.get(pointerId);
+        b.addEventListener("pointermove", (e) => {
+          const p = pointers.get(e.pointerId);
           if (!p) return;
+          const detune = e.clientY - p.centerY;
           for (const osc of p.oscs) {
-            console.log("stopping p.osc");
-            osc.stop();
+            osc.detune.value = detune * 0.5;
           }
-          p.target.style.background = "";
-          pointers.delete(pointerId);
-          // console.log("stop", pointerId);
-        }
-        tonnetz.addEventListener("pointerup", (e) => stop(e.pointerId));
-        tonnetz.addEventListener(
+        })
+        b.addEventListener("pointerup", (e) => stop(e.pointerId));
+        b.addEventListener(
           "pointerleave",
-          (e) => e.target.className.includes("button") || stop(e.pointerId)
+          (e) => stop(e.pointerId)
         );
-      });
-    </script>
-    <style type="text/css">
-      * {
-        box-sizing: border-box;
+
       }
-      html {
-        height: 100%;
-        width: 100%;
-      }
-      body {
-        background-color: lavender;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        margin: 0;
-      }
-      .controls {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: stretch;
-      }
-      .modifiers {
-        background: rgba(0, 0, 0, 0.1);
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-      }
-      .tonnetz {
-        background: rgba(0, 0, 0, 0.1);
-        padding: 20px 40px;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        justify-content: center;
-      }
-      .tonnetz-row {
-        display: flex;
-        flex-direction: row;
-      }
-      .tonnetz-row:nth-of-type(2) {
-        padding-right: 20px;
-      }
-      .tonnetz-row:nth-of-type(3) {
-        padding-right: 40px;
-      }
-      .button {
-        height: 100px;
-        width: 100px;
-        border-radius: 100px;
-        background-color: grey;
-        font-family: Verdana, Geneva, Tahoma, sans-serif;
-        font-size: 50px;
-        color: white;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        user-select: none;
-      }
-    </style>
-  </head>
-  <body>
+    });
+  </script>
+  <style type="text/css">
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      background-color: pink;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    .container {
+      background: pink;
+      margin: auto;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .controls {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+    }
+
+    .chords {
+      user-select: none;
+      touch-action: none;
+      background: rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+    }
+
+    .chord-column {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .bass {
+      touch-action: none;
+      background: rgba(0, 0, 0, 0.1);
+      padding: 20px 40px;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .bass-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .button {
+      height: 80px;
+      width: 80px;
+      border-radius: 20px;
+      margin: 1px;
+      background: #a99;
+      font-family: 'DejaVu Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 40px;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .button.bass-button {
+      background: linear-gradient(to bottom, #a99 65%, #777 65%);
+    }
+
+    .fullscreen-button {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100px;
+      height: 100px;
+    }
+
+    *:fullscreen .fullscreen-button,
+    .fullscreen-button:fullscreen {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <button class="fullscreen-button"
+      onclick="document.body.requestFullscreen().then(() => screen.orientation.lock('landscape'))">Fullscreen</button>
     <div class="controls">
-      <div class="modifiers">
-        <div class="button">&flat;5</div>
-        <div class="button">&sharp;5</div>
+      <div class="bass">
+        <div class="bass-column">
+          <div class="button bass-button">D&flat;</div>
+          <div class="button bass-button">A&flat;</div>
+          <div class="button bass-button">E&flat;</div>
+          <div class="button bass-button">B&flat;</div>
+        </div>
+        <div class="bass-column">
+          <div class="button bass-button">F</div>
+          <div class="button bass-button">C</div>
+          <div class="button bass-button">G</div>
+          <div class="button bass-button">D</div>
+        </div>
+        <div class="bass-column">
+          <div class="button bass-button">A</div>
+          <div class="button bass-button">E</div>
+          <div class="button bass-button">B</div>
+          <div class="button bass-button">F&sharp;</div>
+        </div>
       </div>
-      <div class="tonnetz">
-        <div class="tonnetz-row">
-          <div class="button">D&flat;</div>
-          <div class="button">A&flat;</div>
-          <div class="button">E&flat;</div>
-          <div class="button">B&flat;</div>
+      <div class="chords">
+        <a href="/">Refresh</a>
+        <div class="chord-column">
+          <div class="button chord-button" data-chord="7 11 14 16">Δ9</div>
+          <div class="button chord-button" data-chord="7 9 12 15">m6</div>
+          <div class="button chord-button" data-chord="7 10 12 17">s7</div>
+          <div class="button chord-button" data-chord="6 10 12 15">ø</div>
         </div>
-        <div class="tonnetz-row">
-          <div class="button">F</div>
-          <div class="button">C</div>
-          <div class="button">G</div>
-          <div class="button">D</div>
-        </div>
-        <div class="tonnetz-row">
-          <div class="button">A</div>
-          <div class="button">E</div>
-          <div class="button">B</div>
-          <div class="button">F&sharp;</div>
+        <div class="chord-column">
+          <div class="button chord-button" data-chord="7 11 12 16">Δ</div>
+          <div class="button chord-button" data-chord="7 9 12 16">6</div>
+          <div class="button chord-button" data-chord="7 10 12 16">7</div>
+          <div class="button chord-button" data-chord="7 10 12 15">m7</div>
         </div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
