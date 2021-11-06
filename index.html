@@ -16,6 +16,7 @@
     const pointers = new Map();
     const pi = Math.PI;
     let currentBass = 220.0;
+    let frozenBass = 220.0;
     let sampleBuf = undefined;
 
     fetch("./guitar.wav").then(async r => {
@@ -30,41 +31,29 @@
     function chordFreq(semitones) {
       let k = currentBass * 2 ** (semitones / 12);
       console.log(k);
-      if (k < 300) k *= 2;
-      if (k > 600) k /= 2;
+      if (k < 250) k *= 2;
+      if (k > 650) k /= 2;
       return k;
     }
 
     function noteNameToFrequency(note) {
-      const i = " D EF G A BC".indexOf(note.charAt(0)) - 8;
+      const base = Number(document.querySelector("#base").value);
+      const i = ("A BC D EF G ".indexOf(note.charAt(0)) + 1200 - base) % 12 + base;
       const j = i + !!note.match(/♯/) - !!note.match(/♭/);
       return 220 * 2 ** (j / 12);
     }
 
-    function makeOsc(freq, gainValue) {
-      if (true) {
-        const osc = ctx.createBufferSource();
-        const gain = ctx.createGain();
-        gain.gain.value = gainValue;
-        osc.buffer = sampleBuf;
-        osc.connect(gain);
-        osc.gainNode = gain;
-        gain.connect(mix);
-        // osc.frequency.value = freq;
-        osc.playbackRate.value = freq / 110;
-        osc.start(ctx.currentTime + Math.random()*0.04);
-        return osc;
-
-      }
-      const osc = ctx.createOscillator();
+    function makeOsc(freq, gainValue, strumFactor) {
+      const osc = ctx.createBufferSource();
       const gain = ctx.createGain();
       gain.gain.value = gainValue;
-      osc.type = "triangle";
+      osc.buffer = sampleBuf;
       osc.connect(gain);
       osc.gainNode = gain;
       gain.connect(mix);
-      osc.frequency.value = freq;
-      osc.start();
+      // osc.frequency.value = freq;
+      osc.playbackRate.value = freq / 110;
+      osc.start(ctx.currentTime + Math.random() * strumFactor);
       return osc;
     }
 
@@ -85,8 +74,12 @@
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
 
+        let isFrozen = document.getElementById("freeze").checked;
         let freq = noteNameToFrequency(e.target.innerText);
+        if (!isFrozen) frozenBass = freq;
         currentBass = freq;
+        if (isFrozen) freq = frozenBass;
+        
         const fourthLower = e.clientY > rect.top + rect.height * 0.65;
         e.target.style.background = fourthLower
           ? "linear-gradient(to bottom, #a99 65%, #f80 65%)"
@@ -97,7 +90,7 @@
           centerY: centerY,
           note: e.target.innerText,
           target: e.target,
-          oscs: [makeOsc(freq / 2, 0.3)],
+          oscs: [makeOsc(freq / 2, 0.3, 0)],
         });
 
         for (const v of pointers.values()) {
@@ -117,7 +110,7 @@
         const p = pointers.get(pointerId);
         if (!p) return;
         for (const osc of p.oscs) {
-          osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.005)
+          osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.01)
           osc.stop(ctx.currentTime + 0.2);
         }
         p.target.style.background = "";
@@ -142,7 +135,7 @@
             note: e.target.innerText,
             target: e.target,
             voicing: voicing,
-            oscs: voicing.map(i => makeOsc(chordFreq(i), 0.06)),
+            oscs: voicing.map(i => makeOsc(chordFreq(i), 0.06, 0.04)),
           });
         });
         b.addEventListener("pointermove", (e) => {
@@ -150,7 +143,7 @@
           if (!p) return;
           const detune = e.clientY - p.centerY;
           for (const osc of p.oscs) {
-            osc.detune.value = detune * 0.5;
+            osc.detune.value = detune * -0.5;
           }
         })
         b.addEventListener("pointerup", (e) => stop(e.pointerId));
@@ -158,7 +151,6 @@
           "pointerleave",
           (e) => stop(e.pointerId)
         );
-
       }
     });
   </script>
@@ -213,10 +205,18 @@
     .chord-column {
       display: flex;
       flex-direction: column;
+      justify-content: end;
+    }
+
+    .middle {
+      display: flex;
+      flex-direction: column;
       justify-content: center;
+      align-items: center;
     }
 
     .bass {
+      user-select: none;
       touch-action: none;
       background: rgba(0, 0, 0, 0.1);
       padding: 20px 40px;
@@ -267,9 +267,25 @@
     }
 
     .refresh-link {
+      user-select: none;
       position: absolute;
       top: 4px;
       right: 4px;
+    }
+
+    input[type=range][orient=vertical]
+    {
+      writing-mode: bt-lr; /* IE */
+      -webkit-appearance: slider-vertical; /* WebKit */
+      width: 12px;
+      height: 80%;
+      padding: 0 5px;
+    }
+
+    input[type=checkbox]
+    {
+      width: 20px;
+      height: 20px;
     }
   </style>
 </head>
@@ -300,13 +316,16 @@
           <div class="button bass-button">F&sharp;</div>
         </div>
       </div>
+      <div class="middle">
+        <input id="base" type="range" orient="vertical" min="-12" max="12" value="-8">
+        <!-- <input id="freeze" type="checkbox"> -->
+      </div>
       <div class="chords">
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 11 14 16">Δ9</div>
           <div class="button chord-button" data-chord="7 10 14 15">m9</div>
           <div class="button chord-button" data-chord="7 10 12 17">7s</div>
           <div class="button chord-button" data-chord="6 10 12 16">&flat;5</div>
-
         </div>
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 11 12 16">Δ</div>
