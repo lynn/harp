@@ -103,7 +103,8 @@
         for (const v of pointers.values()) {
           if (v.voicing) {
             for (let i = 0; i < v.voicing.length; i++) {
-              v.oscs[i].frequency.value = chordFreq(v.voicing[i]);
+              // v.oscs[i].frequency.value = chordFreq(v.voicing[i]); 
+              v.oscs[i].playbackRate.value = chordFreq(v.voicing[i]) / 110;
             }
           }
         }
