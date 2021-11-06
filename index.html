@@ -8,9 +8,25 @@
   <title>autokalimba</title>
   <script type="text/javascript">
     const ctx = new AudioContext();
+    const mix = ctx.createGain();
+    mix.connect(ctx.destination);
+    // mix.type = "";
+    // mix.frequency.value = 400;
+    mix.gain.value = 1.2;
     const pointers = new Map();
     const pi = Math.PI;
     let currentBass = 220.0;
+    let sampleBuf = undefined;
+
+    fetch("./guitar.wav").then(async r => {
+      const blob = await r.blob();
+      const ab = await blob.arrayBuffer();
+      ctx.decodeAudioData(ab, buf => {
+        sampleBuf = buf;
+        console.log(sampleBuf);
+      });
+    });
+
     function chordFreq(semitones) {
       let k = currentBass * 2 ** (semitones / 12);
       console.log(k);
@@ -25,14 +41,28 @@
       return 220 * 2 ** (j / 12);
     }
 
-    function makeOsc(freq, type) {
+    function makeOsc(freq, gainValue) {
+      if (true) {
+        const osc = ctx.createBufferSource();
+        const gain = ctx.createGain();
+        gain.gain.value = gainValue;
+        osc.buffer = sampleBuf;
+        osc.connect(gain);
+        osc.gainNode = gain;
+        gain.connect(mix);
+        // osc.frequency.value = freq;
+        osc.playbackRate.value = freq / 110;
+        osc.start(ctx.currentTime + Math.random()*0.04);
+        return osc;
+
+      }
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      gain.gain.value = 0.2;
-      osc.type = type ?? "triangle";
+      gain.gain.value = gainValue;
+      osc.type = "triangle";
       osc.connect(gain);
       osc.gainNode = gain;
-      gain.connect(ctx.destination);
+      gain.connect(mix);
       osc.frequency.value = freq;
       osc.start();
       return osc;
@@ -67,7 +97,7 @@
           centerY: centerY,
           note: e.target.innerText,
           target: e.target,
-          oscs: [makeOsc(freq / 2), makeOsc(freq / 2, "sine")],
+          oscs: [makeOsc(freq / 2, 0.3)],
         });
 
         for (const v of pointers.values()) {
@@ -111,7 +141,7 @@
             note: e.target.innerText,
             target: e.target,
             voicing: voicing,
-            oscs: voicing.map(i => makeOsc(chordFreq(i))),
+            oscs: voicing.map(i => makeOsc(chordFreq(i), 0.06)),
           });
         });
         b.addEventListener("pointermove", (e) => {
@@ -272,21 +302,22 @@
       <div class="chords">
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 11 14 16">Δ9</div>
+          <div class="button chord-button" data-chord="7 10 14 15">m9</div>
           <div class="button chord-button" data-chord="7 10 12 17">7s</div>
-          <div class="button chord-button" data-chord="6 10 12 15">ø</div>
-          <div class="button chord-button" data-chord="6 9 12 15">o</div>
+          <div class="button chord-button" data-chord="6 10 12 16">&flat;5</div>
+
         </div>
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 11 12 16">Δ</div>
-          <div class="button chord-button" data-chord="7 10 12 16">7</div>
           <div class="button chord-button" data-chord="7 10 12 15">m7</div>
-          <div class="button chord-button" data-chord="8 10 12 16">7#5</div>
+          <div class="button chord-button" data-chord="7 10 12 16">7</div>
+          <div class="button chord-button" data-chord="8 10 12 16">&sharp;5</div>
         </div>
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 9 12 16">6</div>
           <div class="button chord-button" data-chord="7 9 12 15">m6</div>
-          <div class="button chord-button" data-chord="7 10 14 15">m9</div>
-          <div class="button chord-button" data-chord="6 10 12 16">7b5</div>
+          <div class="button chord-button" data-chord="6 10 12 15">ø</div>
+          <div class="button chord-button" data-chord="6 9 12 15">o</div>
         </div>
       </div>
     </div>
