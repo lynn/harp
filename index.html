@@ -5,14 +5,14 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>harp</title>
+  <title>autokalimba</title>
   <script type="text/javascript">
     const ctx = new AudioContext();
     const pointers = new Map();
     const pi = Math.PI;
     let currentBass = 220.0;
-    function cf(note) {
-      let k = currentBass * 2 ** (note / 12);
+    function chordFreq(semitones) {
+      let k = currentBass * 2 ** (semitones / 12);
       console.log(k);
       if (k < 300) k *= 2;
       if (k > 600) k /= 2;
@@ -25,45 +25,55 @@
       return 220 * 2 ** (j / 12);
     }
 
+    function makeOsc(freq, type) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.value = 0.2;
+      osc.type = type ?? "triangle";
+      osc.connect(gain);
+      osc.gainNode = gain;
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.start();
+      return osc;
+    }
+
     window.addEventListener("DOMContentLoaded", (event) => {
       const bass = document.querySelector(".bass");
       const bassButtons = [...document.querySelectorAll(".bass-button")];
       for (const b of bassButtons) {
+        // Prevent selecting them with long taps:
         b.addEventListener("pointerdown", (e) => { });
         b.addEventListener("pointermove", (e) => { });
       }
+
+      // This is on "bass" so that clicking and dragging off the button works.
       bass.addEventListener("pointerdown", (e) => {
         if (!e.target.className.includes("button")) return;
         console.log(e.pointerId, e.target);
         const rect = e.target.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        gain.gain.value = 0.2;
-        osc.type = "triangle";
-        osc.connect(gain);
-        osc.gainNode = gain;
-        gain.connect(ctx.destination);
-        const note = noteNameToFrequency(e.target.innerText);
-        const fifthBelow = e.clientY > rect.top + rect.height * 0.65;
-        e.target.style.background = fifthBelow ? "linear-gradient(to bottom, #a99 65%, #f80 65%)" : "linear-gradient(to bottom, #f80 65%, #777 65%)";
-        osc.frequency.value = note * (fifthBelow ? 0.375 : 0.5);
-        osc.start();
-        currentBass = note;
 
+        let freq = noteNameToFrequency(e.target.innerText);
+        currentBass = freq;
+        const fourthLower = e.clientY > rect.top + rect.height * 0.65;
+        e.target.style.background = fourthLower
+          ? "linear-gradient(to bottom, #a99 65%, #f80 65%)"
+          : "linear-gradient(to bottom, #f80 65%, #777 65%)";
+        if (fourthLower) freq *= 0.75;
         pointers.set(e.pointerId, {
           centerX: centerX,
           centerY: centerY,
           note: e.target.innerText,
           target: e.target,
-          oscs: [osc],
+          oscs: [makeOsc(freq / 2), makeOsc(freq / 2, "sine")],
         });
 
         for (const v of pointers.values()) {
           if (v.voicing) {
             for (let i = 0; i < v.voicing.length; i++) {
-              v.oscs[i].frequency.value = cf(v.voicing[i]);
+              v.oscs[i].frequency.value = chordFreq(v.voicing[i]);
             }
           }
         }
@@ -71,51 +81,13 @@
 
       bass.addEventListener("pointermove", (e) => {
         // const p = pointers.get(e.pointerId);
-        // if (!p) return;
-        // const dx = e.clientX - p.centerX;
-        // const dy = e.clientY - p.centerY;
-        // if (Math.hypot(dx, dy) > 30) {
-        //   const a = Math.atan2(dy, dx);
-        //   const seg = Math.floor(((a + pi) / (2 * pi)) * 4 + 0.5) % 4;
-        //   const chords = [
-        //     [0, 12, 16, 19],
-        //     [0, 12, 15, 19],
-        //     [0, 10, 16, 19],
-        //     [0, 10, 15, 19],
-        //   ];
-        //   const base = noteNameToFrequency(p.note);
-        //   const chord = chords[seg];
-        //   while (p.oscs.length < chord.length) {
-        //     const osc = ctx.createOscillator();
-        //     const gain = ctx.createGain();
-        //     gain.gain.value = 0.2;
-        //     osc.type = "triangle";
-        //     osc.connect(gain);
-        //     gain.connect(ctx.destination);
-        //     osc.start();
-        //     p.oscs.push(osc);
-        //   }
-        //   while (p.oscs.length > chord.length) {
-        //     p.oscs.pop();
-        //   }
-        //   for (let i = 0; i < chord.length; i++) {
-        //     p.oscs[i].frequency.value = base * 2 ** (chord[i] / 12);
-        //     // p.oscs[i].start();
-        //   }
-        //   p.target.style.background = "red";
-        // } else {
-        //   for (const osc of p.oscs) osc.stop();
-        //   p.oscs = [];
-        //   p.target.style.background = "blue";
-        // }
       });
       function stop(pointerId) {
         const p = pointers.get(pointerId);
         if (!p) return;
         for (const osc of p.oscs) {
-          console.log("stopping p.osc");
           osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.005)
-          osc.stop(ctx.currentTime + 1);
+          osc.stop(ctx.currentTime + 0.2);
         }
         p.target.style.background = "";
         pointers.delete(pointerId);
@@ -139,19 +111,7 @@
             note: e.target.innerText,
             target: e.target,
             voicing: voicing,
-            oscs: voicing.map(i => {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              gain.gain.value = 0.2;
-              osc.type = "triangle";
-              osc.connect(gain);
-              osc.gainNode = gain;
-              gain.connect(ctx.destination);
-              osc.frequency.value = cf(i);
-              osc.start();
-              console.log(osc);
-              return osc;
-            }),
+            oscs: voicing.map(i => makeOsc(chordFreq(i))),
           });
         });
         b.addEventListener("pointermove", (e) => {
@@ -264,8 +224,8 @@
 
     .fullscreen-button {
       position: absolute;
-      top: 0;
-      left: 0;
+      top: 4px;
+      left: 4px;
       width: 100px;
       height: 100px;
     }
@@ -274,6 +234,12 @@
     .fullscreen-button:fullscreen {
       display: none;
     }
+
+    .refresh-link {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+    }
   </style>
 </head>
 
@@ -281,6 +247,7 @@
   <div class="container">
     <button class="fullscreen-button"
       onclick="document.body.requestFullscreen().then(() => screen.orientation.lock('landscape'))">Fullscreen</button>
+    <a class="refresh-link" href="">Refresh</a>
     <div class="controls">
       <div class="bass">
         <div class="bass-column">
@@ -303,18 +270,23 @@
         </div>
       </div>
       <div class="chords">
-        <a href="/">Refresh</a>
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 11 14 16">Δ9</div>
-          <div class="button chord-button" data-chord="7 9 12 15">m6</div>
-          <div class="button chord-button" data-chord="7 10 12 17">s7</div>
+          <div class="button chord-button" data-chord="7 10 12 17">7s</div>
           <div class="button chord-button" data-chord="6 10 12 15">ø</div>
+          <div class="button chord-button" data-chord="6 9 12 15">o</div>
         </div>
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 11 12 16">Δ</div>
-          <div class="button chord-button" data-chord="7 9 12 16">6</div>
           <div class="button chord-button" data-chord="7 10 12 16">7</div>
           <div class="button chord-button" data-chord="7 10 12 15">m7</div>
+          <div class="button chord-button" data-chord="8 10 12 16">7#5</div>
+        </div>
+        <div class="chord-column">
+          <div class="button chord-button" data-chord="7 9 12 16">6</div>
+          <div class="button chord-button" data-chord="7 9 12 15">m6</div>
+          <div class="button chord-button" data-chord="7 10 14 15">m9</div>
+          <div class="button chord-button" data-chord="6 10 12 16">7b5</div>
         </div>
       </div>
     </div>
