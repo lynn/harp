@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>autokalimba</title>
   <script type="text/javascript">
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -66,12 +67,23 @@
     }
 
     window.addEventListener("DOMContentLoaded", (event) => {
+      const fullscreenButton = document.querySelector(".fullscreen-button")
+      if (document.fullscreenEnabled) {
+        fullscreenButton.addEventListener("click", () => {
+          document.body.requestFullscreen()
+            .then(() => screen.orientation.lock('landscape'));
+        });
+      } else {
+        fullscreenButton.style.display = "none";
+      }
+
       const bass = document.querySelector(".bass");
       const bassButtons = [...document.querySelectorAll(".bass-button")];
       for (const b of bassButtons) {
         // Prevent selecting them with long taps:
         b.addEventListener("pointerdown", (e) => { });
         b.addEventListener("pointermove", (e) => { });
+        b.addEventListener("touchstart", (e) => { e.preventDefault(); });
       }
 
       // This is on "bass" so that clicking and dragging off the button works.
@@ -165,6 +177,7 @@
           "pointerleave",
           (e) => stop(e.pointerId)
         );
+        b.addEventListener("touchstart", (e) => { e.preventDefault(); });
       }
     });
   </script>
@@ -183,6 +196,7 @@
       width: 100%;
       height: 100%;
       margin: 0;
+      touch-action: pan-x pan-y pinch-zoom;
     }
 
     .container {
@@ -326,8 +340,7 @@
 
 <body>
   <div class="container">
-    <button class="fullscreen-button"
-      onclick="document.body.requestFullscreen().then(() => screen.orientation.lock('landscape'))">Fullscreen</button>
+    <button class="fullscreen-button">Fullscreen</button>
     <input type="checkbox" id="settings"></input>
     <label for="settings">Settings</label>
     <a class="refresh-link" href="">Refresh</a>
