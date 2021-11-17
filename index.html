@@ -13,7 +13,7 @@
     mix.connect(ctx.destination);
     // mix.type = "";
     // mix.frequency.value = 400;
-    mix.gain.value = 1.2;
+    mix.gain.value = 1.4;
     const pointers = new Map();
     const pi = Math.PI;
     let currentBass = 220.0;
@@ -104,13 +104,13 @@
           centerY: centerY,
           note: e.target.innerText,
           target: e.target,
-          oscs: [makeOsc(freq / 2, 0.3, 0)],
+          oscs: [makeOsc(freq / 2, 0.6, 0)],
         });
 
         for (const v of pointers.values()) {
           if (v.voicing) {
             for (let i = 0; i < v.voicing.length; i++) {
-              // v.oscs[i].frequency.value = chordFreq(v.voicing[i]); 
+              // v.oscs[i].frequency.value = chordFreq(v.voicing[i]);
               v.oscs[i].playbackRate.value = chordFreq(v.voicing[i]) / 110;
             }
           }
@@ -121,6 +121,7 @@
         // const p = pointers.get(e.pointerId);
       });
       function stop(pointerId) {
+        return;
         const p = pointers.get(pointerId);
         if (!p) return;
         for (const osc of p.oscs) {
@@ -149,7 +150,7 @@
             note: e.target.innerText,
             target: e.target,
             voicing: voicing,
-            oscs: voicing.map(i => makeOsc(chordFreq(i), 0.06, 0.04)),
+            oscs: voicing.map(i => makeOsc(chordFreq(i), 0.16, 0.04)),
           });
         });
         b.addEventListener("pointermove", (e) => {
