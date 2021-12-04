@@ -1,0 +1,180 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: "DejaVu Sans", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: pink;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+.container {
+  background-color: pink;
+  margin: auto;
+  padding: 0px 10px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.controls {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: pink;
+  position: absolute;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
+.chords {
+  user-select: none;
+  touch-action: none;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.chord-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+.middle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.bass {
+  user-select: none;
+  touch-action: none;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 20px 40px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bass-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.button {
+  height: 80px;
+  width: 80px;
+  border-radius: 20px;
+  margin: 1px;
+  background: #a99;
+  font-size: 40px;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fullscreen-button-area {
+  position: absolute;
+  top: 20px;
+  right: 4px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+}
+
+*:fullscreen .fullscreen-button-area,
+.fullscreen-button-area:fullscreen {
+  display: none;
+}
+
+.fullscreen-button-area button {
+  min-width: 100px;
+  min-height: 50px;
+}
+
+.fullscreen-button-area button.fullscreen-button {
+  min-height: 100px;
+  font-size: 110%;
+}
+
+.refresh-link {
+  user-select: none;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 5;
+}
+
+input[type="range"][orient="vertical"] {
+  writing-mode: bt-lr;
+  /* IE */
+  -webkit-appearance: slider-vertical;
+  /* WebKit */
+  width: 12px;
+  height: 80%;
+  padding: 0 5px;
+}
+
+#settings {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 5;
+}
+
+/* Make the settings non-tabbable when hidden */
+#settings:not(:checked) ~ a,
+#settings:not(:checked) ~ select,
+#settings:not(:checked) ~ input {
+  display: none;
+}
+
+label {
+  user-select: none;
+}
+
+label[for="settings"] {
+  position: absolute;
+  top: 4px;
+  left: 30px;
+  z-index: 5;
+}
+
+#settings:checked ~ .controls {
+  pointer-events: none;
+  opacity: 0.2;
+}
+
+#split-keys:checked ~ .controls .button.bass-button {
+  background: linear-gradient(to bottom, #a99 65%, #777 65%);
+}
+
+#horizontal-chords:checked ~ .controls .chords {
+  flex-direction: column;
+}
+
+#horizontal-chords:checked ~ .controls .chord-column {
+  flex-direction: row;
+}
