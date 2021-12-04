@@ -14,21 +14,28 @@
     mix.connect(ctx.destination);
     // mix.type = "";
     // mix.frequency.value = 400;
-    mix.gain.value = 1.2;
+    mix.gain.value = 1.4;
     const pointers = new Map();
     const pi = Math.PI;
     let currentBass = 220.0;
     let frozenBass = 220.0;
     let sampleBuf = undefined;
 
-    fetch("./guitar.wav").then(async r => {
-      const blob = await r.blob();
-      const ab = await blob.arrayBuffer();
-      ctx.decodeAudioData(ab, buf => {
-        sampleBuf = buf;
-        console.log(sampleBuf);
+    let sampleBaseFreq = 110;
+
+    function loadInstrument(path) {
+      sampleBaseFreq = /kalimba/.test(path) ? 220 : 110;
+      fetch(path).then(async r => {
+        const blob = await r.blob();
+        const ab = await blob.arrayBuffer();
+        ctx.decodeAudioData(ab, buf => {
+          sampleBuf = buf;
+          console.log(sampleBuf);
+        });
       });
-    });
+    }
+
+    loadInstrument("./guitar.wav");
 
     function chordFreq(semitones) {
       let k = currentBass * 2 ** (semitones / 12);
@@ -61,7 +68,7 @@
       osc.gainNode = gain;
       gain.connect(mix);
       // osc.frequency.value = freq;
-      osc.playbackRate.value = freq / 110;
+      osc.playbackRate.value = freq / sampleBaseFreq;
       osc.start(ctx.currentTime + Math.random() * strumFactor);
       return osc;
     }
@@ -77,6 +84,10 @@
         fullscreenButton.style.display = "none";
       }
 
+      document.querySelector("#select-instrument").onchange = (e) => {
+        console.log(e);
+        loadInstrument(`./${e.target.value}.wav`);
+      }
       const bass = document.querySelector(".bass");
       const bassButtons = [...document.querySelectorAll(".bass-button")];
       for (const b of bassButtons) {
@@ -87,7 +98,8 @@
       }
 
       // This is on "bass" so that clicking and dragging off the button works.
-      bass.addEventListener("pointerdown", (e) => {
+      [...bassButtons].map(i => i.addEventListener("pointerdown", (e) => {
+        console.log(e);
         if (!e.target.className.includes("button")) return;
         console.log(e.pointerId, e.target);
         const rect = e.target.getBoundingClientRect();
@@ -116,18 +128,18 @@
           centerY: centerY,
           note: e.target.innerText,
           target: e.target,
-          oscs: [makeOsc(freq / 2, 0.3, 0)],
+          oscs: [makeOsc(freq / 2, 0.6, 0)],
         });
 
         for (const v of pointers.values()) {
           if (v.voicing) {
             for (let i = 0; i < v.voicing.length; i++) {
               // v.oscs[i].frequency.value = chordFreq(v.voicing[i]); 
-              v.oscs[i].playbackRate.value = chordFreq(v.voicing[i]) / 110;
+              v.oscs[i].playbackRate.value = chordFreq(v.voicing[i]) / sampleBaseFreq;
             }
           }
         }
-      });
+      }));
 
       bass.addEventListener("pointermove", (e) => {
         // const p = pointers.get(e.pointerId);
@@ -161,7 +173,7 @@
             note: e.target.innerText,
             target: e.target,
             voicing: voicing,
-            oscs: voicing.map(i => makeOsc(chordFreq(i), 0.06, 0.04)),
+            oscs: voicing.map(i => makeOsc(chordFreq(i), 0.2, 0.04)),
           });
         });
         b.addEventListener("pointermove", (e) => {
@@ -179,6 +191,41 @@
         );
         b.addEventListener("touchstart", (e) => { e.preventDefault(); });
       }
+
+      // const bassKb = "1qaz2wsx3edc";
+      const bassKb = "2wsx3edc4rfv";
+      const chordKb = "yuiophjkl;nm,./";
+      document.addEventListener("keydown", (e) => {
+        const i = bassKb.indexOf(e.key);
+        if (e.repeat) return;
+        console.log(e, i);
+        if (i >= 0) {
+          const target = bassButtons[i];
+          target.dispatchEvent(new PointerEvent("pointerdown", {
+            pointerId: 999 + i,
+            isPrimary: true,
+          }));
+        }
+        const j = chordKb.indexOf(e.key);
+        if (j >= 0) {
+          const target = chordButtons[j];
+          target.dispatchEvent(new PointerEvent("pointerdown", {
+            pointerId: 1999 + j,
+            isPrimary: true,
+          }))
+        }
+      });
+      document.addEventListener("keyup", (e) => {
+        const i = bassKb.indexOf(e.key);
+        console.log(e, i);
+        if (i >= 0) {
+          stop(999 + i);
+        }
+        const j = chordKb.indexOf(e.key);
+        if (j >= 0) {
+          stop(1999 + j);
+        }
+      })
     });
   </script>
   <style type="text/css">
@@ -280,10 +327,8 @@
 
     .fullscreen-button {
       position: absolute;
-      bottom: 4px;
+      top: 20px;
       left: 4px;
-      width: 100px;
-      height: 100px;
       z-index: 5;
     }
 
@@ -329,24 +374,45 @@
     }
 
     #settings:checked~.controls {
-      display: none;
+      pointer-events: none;
+      opacity: 0.2;
     }
 
     #split-keys:checked~.controls .button.bass-button {
       background: linear-gradient(to bottom, #a99 65%, #777 65%);
+    }
+
+    #horizontal-chords:checked~.controls .chords {
+      flex-direction: column;
+    }
+
+    #horizontal-chords:checked~.controls .chord-column {
+      flex-direction: row;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
+    <div id="fullscreen-button" class="fullscreen-button">
     <button class="fullscreen-button">Fullscreen</button>
+      <button onclick="document.getElementById('fullscreen-button').remove()">nah I'm good</button>
+    </div>
     <input type="checkbox" id="settings"></input>
     <label for="settings">Settings</label>
     <a class="refresh-link" href="">Refresh</a>
-    <br><br>
+    <br>
+    <br>
     <input type="checkbox" checked id="split-keys"></input>
     <label for="split-keys">Split keys</label>
+    <br>
+    <input type="checkbox" id="horizontal-chords"></input>
+    <label for="horizontal-chords">Horizontal chords</label>
+    <br>
+    <select name="instrument" id="select-instrument">
+      <option value="guitar">Guitar</option>
+      <option value="kalimba">Kalimba</option>
+    </select>
     <div class="controls">
       <div class="bass">
         <div class="bass-column">
@@ -369,7 +435,7 @@
         </div>
       </div>
       <div class="middle">
-        <input id="base" type="range" orient="vertical" min="-12" max="12" value="-8">
+        <input id="base" type="range" orient="vertical" min="-12" max="12" value="-3">
         <input hidden id="freeze" type="checkbox">
       </div>
       <div class="chords">
@@ -377,14 +443,14 @@
           <div class="button chord-button" data-chord="7 11 14 16">Δ9</div>
           <div class="button chord-button" data-chord="7 10 14 15">m9</div>
           <div class="button chord-button" data-chord="7 10 12 17">7s</div>
-          <div class="button chord-button" data-chord="6 10 12 16">&flat;5</div>
+          <div class="button chord-button" data-chord="7 10 13 16">7b9</div>
           <div class="button chord-button" data-chord="10 14 17 21">13s</div>
         </div>
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 11 12 16">Δ</div>
           <div class="button chord-button" data-chord="7 10 12 15">m7</div>
           <div class="button chord-button" data-chord="7 10 12 16">7</div>
-          <div class="button chord-button" data-chord="8 10 12 16">&sharp;5</div>
+          <div class="button chord-button" data-chord="8 10 12 16">7&sharp;5</div>
           <div class="button chord-button" data-chord="10 14 16 21">13</div>
         </div>
         <div class="chord-column">
