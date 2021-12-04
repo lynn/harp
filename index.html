@@ -75,6 +75,7 @@
     }
 
     window.addEventListener("DOMContentLoaded", (event) => {
+      if (/harp/.test(window.location.href)) document.querySelector(".refresh-link").remove();
       const fullscreenButton = document.querySelector(".fullscreen-button")
       if (document.fullscreenEnabled) {
         fullscreenButton.addEventListener("click", () => {
