@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>autokalimba</title>
   <script type="text/javascript">
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -74,6 +75,16 @@
     }
 
     window.addEventListener("DOMContentLoaded", (event) => {
+      const fullscreenButton = document.querySelector(".fullscreen-button")
+      if (document.fullscreenEnabled) {
+        fullscreenButton.addEventListener("click", () => {
+          document.body.requestFullscreen()
+            .then(() => screen.orientation.lock('landscape'));
+        });
+      } else {
+        fullscreenButton.style.display = "none";
+      }
+
       document.querySelector("#select-instrument").onchange = (e) => {
         console.log(e);
         loadInstrument(`./${e.target.value}.wav`);
@@ -86,6 +97,7 @@
         // Prevent selecting them with long taps:
         b.addEventListener("pointerdown", (e) => { });
         b.addEventListener("pointermove", (e) => { });
+        b.addEventListener("touchstart", (e) => { e.preventDefault(); });
       }
 
       // This is on "bass" so that clicking and dragging off the button works.
@@ -180,6 +192,7 @@
           "pointerleave",
           (e) => stop(e.pointerId)
         );
+        b.addEventListener("touchstart", (e) => { e.preventDefault(); });
       }
 
       // const bassKb = "1qaz2wsx3edc";
@@ -233,6 +246,7 @@
       width: 100%;
       height: 100%;
       margin: 0;
+      touch-action: pan-x pan-y pinch-zoom;
     }
 
     .container {
@@ -384,13 +398,10 @@
 
 <body>
   <div class="container">
-    <div id="fullscreen-button" class="fullscreen-button">
-      <button style="height:100px;width:100px"
-        onclick="document.body.requestFullscreen().then(() => screen.orientation.lock('landscape'))">Fullscreen</button>
-      <br>
-      <button style="height:40px;width:100px" onclick="document.getElementById('fullscreen-button').remove()">nah I'm good</button>
+    <div id="fullscreen-button-area" class="fullscreen-button">
+      <button style="height:100px;width:100px" class="fullscreen-button">Fullscreen</button>
+      <button style="height:40px;width:100px" onclick="document.getElementById('fullscreen-button-area').remove()">nah I'm good</button>
     </div>
-
     <input type="checkbox" id="settings"></input>
     <label for="settings">Settings</label>
     <a class="refresh-link" href="">Refresh</a>
