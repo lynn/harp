@@ -20,6 +20,7 @@
     let currentBass = 220.0;
     let frozenBass = 220.0;
     let sampleBuf = undefined;
+    let strumSetting = 0.04;
 
     let sampleBaseFreq = 110;
 
@@ -52,7 +53,7 @@
     }
 
     function noteNameToSemitone(note) {
-      return "A BC D EF G ".indexOf(note.charAt(0)) + /♯/.test(note) - /♭/.test(note);
+      return "A BC D EF G ".indexOf(note.charAt(0)) + /♯|#/.test(note) - /♭|b/.test(note);
     }
 
     function noteNameToFrequency(note) {
@@ -88,6 +89,8 @@
         console.log(e);
         loadInstrument(`./${e.target.value}.wav`);
       }
+      document.querySelector("#gain").onchange = (e) => { mix.gain.value = e.target.value; };
+      document.querySelector("#strum").onchange = (e) => { strumSetting = e.target.value; };
       const bass = document.querySelector(".bass");
       const bassButtons = [...document.querySelectorAll(".bass-button")];
       for (const b of bassButtons) {
@@ -173,7 +176,7 @@
             note: e.target.innerText,
             target: e.target,
             voicing: voicing,
-            oscs: voicing.map(i => makeOsc(chordFreq(i), 0.2, 0.04)),
+            oscs: voicing.map(i => makeOsc(chordFreq(i), 0.2, strumSetting)),
           });
         });
         b.addEventListener("pointermove", (e) => {
@@ -249,6 +252,7 @@
     .container {
       background-color: pink;
       margin: auto;
+      padding: 0px 10px;
       position: absolute;
       top: 0;
       bottom: 0;
@@ -394,9 +398,9 @@
 
 <body>
   <div class="container">
-    <div id="fullscreen-button" class="fullscreen-button">
-    <button class="fullscreen-button">Fullscreen</button>
-      <button onclick="document.getElementById('fullscreen-button').remove()">nah I'm good</button>
+    <div id="fullscreen-button-area" class="fullscreen-button">
+      <button style="height:100px;width:100px" class="fullscreen-button">Fullscreen</button>
+      <button style="height:40px;width:100px" onclick="document.getElementById('fullscreen-button-area').remove()">nah I'm good</button>
     </div>
     <input type="checkbox" id="settings"></input>
     <label for="settings">Settings</label>
@@ -409,17 +413,28 @@
     <input type="checkbox" id="horizontal-chords"></input>
     <label for="horizontal-chords">Horizontal chords</label>
     <br>
+    <label for="gain">Gain</label>
+    <input type="range" id="gain" min="0" max="2" value="1.4" step="0.05">
+    <br>
+    <label for="strum">Strum</label>
+    <input type="range" id="strum" min="0" max="0.1" value="0.04" step="0.01">
+    <br>
+    Instrument:
     <select name="instrument" id="select-instrument">
       <option value="guitar">Guitar</option>
       <option value="kalimba">Kalimba</option>
     </select>
+    <br>
+    <a href="https://ko-fi.com/chordbug">Donate</a>
+    <br>
+    <a href="https://github.com/lynn/harp/issues">Report issue</a>
     <div class="controls">
       <div class="bass">
         <div class="bass-column">
-          <div class="button bass-button">D&flat;</div>
-          <div class="button bass-button">A&flat;</div>
-          <div class="button bass-button">E&flat;</div>
-          <div class="button bass-button">B&flat;</div>
+          <div class="button bass-button">Db</div>
+          <div class="button bass-button">Ab</div>
+          <div class="button bass-button">Eb</div>
+          <div class="button bass-button">Bb</div>
         </div>
         <div class="bass-column">
           <div class="button bass-button">F</div>
@@ -431,7 +446,7 @@
           <div class="button bass-button">A</div>
           <div class="button bass-button">E</div>
           <div class="button bass-button">B</div>
-          <div class="button bass-button">F&sharp;</div>
+          <div class="button bass-button">F#</div>
         </div>
       </div>
       <div class="middle">
@@ -450,7 +465,7 @@
           <div class="button chord-button" data-chord="7 11 12 16">Δ</div>
           <div class="button chord-button" data-chord="7 10 12 15">m7</div>
           <div class="button chord-button" data-chord="7 10 12 16">7</div>
-          <div class="button chord-button" data-chord="8 10 12 16">7&sharp;5</div>
+          <div class="button chord-button" data-chord="8 10 12 16">7#5</div>
           <div class="button chord-button" data-chord="10 14 16 21">13</div>
         </div>
         <div class="chord-column">
