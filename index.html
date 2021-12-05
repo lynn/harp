@@ -32,8 +32,11 @@
     <input type="checkbox" id="horizontal-chords"></input>
     <label for="horizontal-chords">Horizontal chords</label>
     <br>
-    <label for="gain">Volume</label>
-    <input type="range" id="gain" min="0" max="2" value="1.4" step="0.05">
+    <label for="bass-gain">Bass volume</label>
+    <input type="range" id="bass-gain" min="0" max="2" value="1" step="0.05">
+    <br>
+    <label for="chord-gain">Chord volume</label>
+    <input type="range" id="chord-gain" min="0" max="2" value="1" step="0.05">
     <br>
     <label for="strum">Strum delay</label>
     <input type="range" id="strum" min="0" max="0.2" value="0.04" step="0.01">
@@ -47,8 +50,7 @@
     <br>
     Instrument:
     <select name="instrument" id="select-instrument">
-      <option value="guitar" selected>Guitar</option>
-      <option value="kalimba">Kalimba</option>
+      <!-- populated by javascript -->
     </select>
     <br>
     <a href="https://ko-fi.com/chordbug">Donate</a>
@@ -95,6 +97,7 @@
         </div>
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 9 12 16">6</div>
+          <!-- <div class="button chord-button" data-chord="up">&uarr;</div> -->
           <div class="button chord-button" data-chord="7 9 12 15">m6</div>
           <div class="button chord-button" data-chord="6 10 12 15">ø</div>
           <div class="button chord-button" data-chord="6 9 12 15">o</div>

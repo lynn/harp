@@ -5,28 +5,44 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 const ctx = new AudioContext();
 const mix = ctx.createGain();
 mix.connect(ctx.destination);
-mix.gain.value = 1.4;
+mix.gain.value = 1.0;
 const pointers = new Map();
-const pi = Math.PI;
 let currentBass = 220.0;
 // let frozenBass = 220.0;
-let sampleBuf = undefined;
+let sampleBuffers = [];
 let strumSetting = 0.04;
 
-let sampleBaseFreq = 110;
+let bassGain = 1.0;
+let chordGain = 1.0;
 
-function loadInstrument(path) {
-  sampleBaseFreq = /kalimba/.test(path) ? 220 : 110;
-  fetch(path).then(async (r) => {
-    const blob = await r.blob();
-    const ab = await blob.arrayBuffer();
-    ctx.decodeAudioData(ab, (buf) => {
-      sampleBuf = buf;
+let instruments = {
+  Guitar: {
+    samples: [{ name: "guitar.wav", freq: 110 }],
+  },
+  Kalimba: {
+    samples: [{ name: "kalimba.wav", freq: 220 }],
+  },
+  Rhodes: {
+    samples: [
+      { name: "rhodes-low.mp3", freq: 110 },
+      { name: "rhodes-high.mp3", freq: 329 },
+    ],
+  },
+};
+
+function loadInstrument(instrument) {
+  instrument.samples.map((s, i) => {
+    fetch("instruments/" + s.name).then(async (r) => {
+      const blob = await r.blob();
+      const ab = await blob.arrayBuffer();
+      ctx.decodeAudioData(ab, (buffer) => {
+        sampleBuffers[i] = { buffer, freq: s.freq };
+      });
     });
   });
 }
 
-loadInstrument("./guitar.wav");
+loadInstrument(instruments["Guitar"]);
 
 function chordFreq(semitones) {
   let k = currentBass * 2 ** (semitones / 12);
@@ -35,10 +51,10 @@ function chordFreq(semitones) {
   return k;
 }
 
-function semitoneToFrequency(st) {
+function bassFreq(semitones) {
   const base = Number($("#base").value);
-  const j = ((st + 1200 - base) % 12) + base;
-  return 220 * 2 ** (j / 12);
+  const wrapped = ((semitones + 1200 - base) % 12) + base;
+  return 220 * 2 ** (wrapped / 12);
 }
 
 function noteNameToSemitone(note) {
@@ -47,20 +63,35 @@ function noteNameToSemitone(note) {
   );
 }
 
-function noteNameToFrequency(note) {
-  return semitoneToFrequency(noteNameToSemitone(note));
-}
-
 function makeOsc(freq, gainValue, delay) {
   const osc = ctx.createBufferSource();
   const gain = ctx.createGain();
   gain.gain.value = gainValue;
-  osc.buffer = sampleBuf;
+  let closestBuffer = sampleBuffers[0];
+  let closestDifference = 9e99;
+  for (const b of sampleBuffers) {
+    const difference = Math.abs(freq - b.freq);
+    if (difference < closestDifference) {
+      closestBuffer = b;
+      closestDifference = difference;
+    }
+  }
+
+  const osc1 = ctx.createOscillator();
+  osc1.frequency.value = 0;
+  var vgain = ctx.createGain();
+  vgain.gain.value = 20;
+  osc1.connect(vgain);
+  vgain.connect(osc.detune);
+  // vgain.connect(gain.gain);
+  osc1.start(ctx.currentTime);
+
+  osc.buffer = closestBuffer.buffer;
   osc.connect(gain);
   osc.gainNode = gain;
   gain.connect(mix);
-  // osc.frequency.value = freq;
-  osc.playbackRate.value = freq / sampleBaseFreq;
+  osc.playbackRate.value = freq / closestBuffer.freq;
+  osc.autokalimbaSampleBaseFreq = closestBuffer.freq;
   osc.start(ctx.currentTime + delay);
   return osc;
 }
@@ -79,11 +110,20 @@ window.addEventListener("DOMContentLoaded", (event) => {
     fullscreenButton.style.display = "none";
   }
 
+  for (const name of Object.keys(instruments)) {
+    const option = document.createElement("option");
+    option.value = name;
+    option.innerText = name;
+    $("#select-instrument").appendChild(option);
+  }
   $("#select-instrument").onchange = (e) => {
-    loadInstrument(`./${e.target.value}.wav`);
+    loadInstrument(instruments[e.target.value]);
   };
-  $("#gain").onchange = (e) => {
-    mix.gain.value = e.target.value;
+  $("#bass-gain").onchange = (e) => {
+    bassGain = e.target.value;
+  };
+  $("#chord-gain").onchange = (e) => {
+    chordGain = e.target.value;
   };
   $("#strum").onchange = (e) => {
     strumSetting = e.target.value;
@@ -103,19 +143,15 @@ window.addEventListener("DOMContentLoaded", (event) => {
       const centerY = rect.top + rect.height / 2;
       const note = e.target.innerText;
 
-      // let isFrozen = $("#freeze").checked;
-      let freq = noteNameToFrequency(note);
-      // if (!isFrozen) frozenBass = freq;
+      let freq = bassFreq(noteNameToSemitone(note));
       currentBass = freq;
-      // if (isFrozen) freq = frozenBass;
 
       if ($("#split-keys").checked) {
         const fourthLower = e.clientY > rect.top + rect.height * 0.65;
         e.target.style.background = fourthLower
           ? "linear-gradient(to bottom, #a99 65%, #f80 65%)"
           : "linear-gradient(to bottom, #f80 65%, #777 65%)";
-        if (fourthLower)
-          freq = semitoneToFrequency(noteNameToSemitone(note) - 5);
+        if (fourthLower) freq = bassFreq(noteNameToSemitone(note) - 5);
       } else {
         e.target.style.background = "#f80";
       }
@@ -125,7 +161,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         centerY: centerY,
         note: e.target.innerText,
         target: e.target,
-        oscs: [makeOsc(freq / 2, 0.6, 0)],
+        oscs: [makeOsc(freq / 2, 0.5 * bassGain, 0)],
       });
 
       for (const v of pointers.values()) {
@@ -133,7 +169,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
           for (let i = 0; i < v.voicing.length; i++) {
             // v.oscs[i].frequency.value = chordFreq(v.voicing[i]);
             v.oscs[i].playbackRate.value =
-              chordFreq(v.voicing[i]) / sampleBaseFreq;
+              chordFreq(v.voicing[i]) / v.oscs[i].autokalimbaSampleBaseFreq;
           }
         }
       }
@@ -159,31 +195,47 @@ window.addEventListener("DOMContentLoaded", (event) => {
     (e) => e.target.className.includes("button") || stop(e.pointerId)
   );
 
+  let lastFreqs = undefined;
+  let lastVoicing = undefined;
   const chordButtons = [...$$(".chord-button")];
   for (const b of chordButtons) {
-    const voicing = b.attributes["data-chord"].value.split(" ");
+    const attr = b.attributes["data-chord"].value;
+    const voicing = attr.split(" ");
     b.addEventListener("pointerdown", (e) => {
       e.target.style.background = "#f80";
       const rect = e.target.getBoundingClientRect();
-      const freqs = voicing.map((f) => chordFreq(f)).sort((a, b) => a - b);
+
+      let freqs;
+      if (attr === "up") {
+        freqs = lastFreqs;
+        freqs.push(Number(freqs.shift()) * 2);
+        console.log(lastFreqs, freqs);
+        lastFreqs = freqs;
+      } else {
+        freqs = voicing.map((f) => chordFreq(f)).sort((a, b) => a - b);
+        lastVoicing = voicing;
+        lastFreqs = freqs;
+      }
+
       pointers.set(e.pointerId, {
         centerX: rect.left + rect.width / 2,
         centerY: rect.top + rect.height / 2,
         note: e.target.innerText,
         target: e.target,
-        voicing: voicing,
+        voicing: lastVoicing,
         oscs: freqs.map((freq, i) => {
           const n = freqs.length;
           const style = $("#select-strum-style").value;
+          const tinyRandom = 1 + (Math.random() - 0.5) * 0.23;
           const delay =
             style === "random"
               ? strumSetting * Math.random()
               : style === "up"
-              ? (strumSetting * i) / n
+              ? ((strumSetting * i) / n) * tinyRandom
               : style === "down"
-              ? (strumSetting * (n - 1 - i)) / n
+              ? ((strumSetting * (n - 1 - i)) / n) * tinyRandom
               : 0;
-          return makeOsc(freq, 0.2, delay);
+          return makeOsc(freq, 0.2 * chordGain, delay);
         }),
       });
     });
