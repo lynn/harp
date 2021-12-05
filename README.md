@@ -21,3 +21,8 @@ A chordal musical instrument for your thumbs! [Play it here on a phone.](http://
 * **Guitar**: [SpeedY on freesound](https://freesound.org/people/SpeedY/sounds/8383/).
 * **Kalimba**: [arioke on freesound](https://freesound.org/people/arioke/sounds/58729/).
 * **Rhodes**: tim.kahn on freesound ([low](https://freesound.org/people/tim.kahn/sounds/65755/), [high](https://freesound.org/people/tim.kahn/sounds/65726/)).
+
+## FAQ
+
+### Why is the repository called `harp`?
+When I made the repository, I only knew I was making something like a digital [autoharp](https://en.wikipedia.org/wiki/Autoharp). The name "autokalimba" was suggested by [@profanegeometry on Twitter](https://twitter.com/profanegeometry/status/1456963454573572102), and it stuck, but `foldr.moe/harp` is easier to type into a URL bar, so I didn't want to change the repository name.
