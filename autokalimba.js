@@ -15,6 +15,9 @@ let strumSetting = 0.04;
 let bassGain = 1.0;
 let chordGain = 1.0;
 
+let lastFreqs = undefined;
+let lastVoicing = undefined;
+
 let instruments = {
   Guitar: {
     samples: [{ name: "guitar.wav", freq: 110 }],
@@ -147,11 +150,18 @@ window.addEventListener("DOMContentLoaded", (event) => {
       currentBass = freq;
 
       if ($("#split-keys").checked) {
-        const fourthLower = e.clientY > rect.top + rect.height * 0.65;
-        e.target.style.background = fourthLower
+        const low = e.clientY > rect.top + rect.height * 0.65;
+        e.target.style.background = low
           ? "linear-gradient(to bottom, #a99 65%, #f80 65%)"
           : "linear-gradient(to bottom, #f80 65%, #777 65%)";
-        if (fourthLower) freq = bassFreq(noteNameToSemitone(note) - 5);
+        if (low) {
+          // If the current chord contains b5 or #5, drop a tritone instead of a fourth.
+          const amt =
+            lastVoicing && lastVoicing.some((v) => v % 12 === 6 || v % 12 === 8)
+              ? 6
+              : 5;
+          freq = bassFreq(noteNameToSemitone(note) - amt);
+        }
       } else {
         e.target.style.background = "#f80";
       }
@@ -195,12 +205,10 @@ window.addEventListener("DOMContentLoaded", (event) => {
     (e) => e.target.className.includes("button") || stop(e.pointerId)
   );
 
-  let lastFreqs = undefined;
-  let lastVoicing = undefined;
   const chordButtons = [...$$(".chord-button")];
   for (const b of chordButtons) {
     const attr = b.attributes["data-chord"].value;
-    const voicing = attr.split(" ");
+    const voicing = attr.split(" ").map(Number);
     b.addEventListener("pointerdown", (e) => {
       e.target.style.background = "#f80";
       const rect = e.target.getBoundingClientRect();
@@ -208,7 +216,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
       let freqs;
       if (attr === "up") {
         freqs = lastFreqs;
-        freqs.push(Number(freqs.shift()) * 2);
+        freqs.push(freqs.shift() * 2);
         console.log(lastFreqs, freqs);
         lastFreqs = freqs;
       } else {
