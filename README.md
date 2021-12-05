@@ -29,8 +29,10 @@ Or listen here: ✨ https://twitter.com/search?q=%23autokalimba&f=video ✨
 ### Why is the repository called `harp`?
 When I made the repository, I only knew I was making something like a digital [autoharp](https://en.wikipedia.org/wiki/Autoharp). The name "autokalimba" was suggested by [@profanegeometry on Twitter](https://twitter.com/profanegeometry/status/1456963454573572102), and it stuck, but `foldr.moe/harp` is easier to type into a URL bar, so I didn't want to change the repository name.
 
-### What is 7s, 13s, ø, o?
-7sus4, 13sus4, m7♭5, dim7
+### What are 7s, 13s, ø, and o?
+Those are: 7sus4, 13sus4, m7♭5, and dim7. I had to get a bit creative to fit everything on the buttons.
+
+By the way, the `II/` button plays chords like `D/C` or `E♭/D♭`. It's a nice Lydian scale-y sound.
 
 ### Your vibrato code causes slight pitch drift when I don't exactly center my thumb on the chord button!!
 Yeah! Isn't it cute??
