@@ -34,6 +34,7 @@ let instruments = {
 };
 
 function loadInstrument(instrument) {
+  sampleBuffers.length = 0;
   instrument.samples.map((s, i) => {
     fetch("instruments/" + s.name).then(async (r) => {
       const blob = await r.blob();
@@ -297,5 +298,19 @@ window.addEventListener("DOMContentLoaded", (event) => {
     if (j >= 0) {
       stop(1999 + j);
     }
+  });
+
+  $$("input, select").forEach((el) => {
+    // Don't remember the settings toggle itself.
+    if (el.id === "settings") return;
+    const key = "autokalimba-" + el.id;
+    const value = window.localStorage.getItem(key);
+    if (value !== null && value !== undefined) {
+      el.value = value;
+      if (el.onchange) el.onchange({ target: el });
+    }
+    el.addEventListener("change", (e) => {
+      window.localStorage.setItem(key, String(e.target.value));
+    });
   });
 });
