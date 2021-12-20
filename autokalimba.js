@@ -18,6 +18,13 @@ let chordGain = 1.0;
 let lastFreqs = undefined;
 let lastVoicing = undefined;
 
+function subSemitones() {
+  // If the last voicing contains b5 or #5, drop a tritone; otherwise, drop a fourth.
+  return lastVoicing && lastVoicing.some((v) => v % 12 === 6 || v % 12 === 8)
+    ? 6
+    : 5;
+}
+
 let instruments = {
   Guitar: {
     samples: [{ name: "guitar.wav", freq: 110 }],
@@ -58,7 +65,7 @@ function chordFreq(semitones) {
 function bassFreq(semitones) {
   const base = Number($("#base").value);
   const wrapped = ((semitones + 1200 - base) % 12) + base;
-  return 220 * 2 ** (wrapped / 12);
+  return 110 * 2 ** (wrapped / 12);
 }
 
 function noteNameToSemitone(note) {
@@ -148,20 +155,16 @@ window.addEventListener("DOMContentLoaded", (event) => {
       const note = e.target.innerText;
 
       let freq = bassFreq(noteNameToSemitone(note));
+      let isSub = false;
       currentBass = freq;
 
       if ($("#split-keys").checked) {
-        const low = e.clientY > rect.top + rect.height * 0.65;
-        e.target.style.background = low
+        isSub = e.clientY > rect.top + rect.height * 0.65;
+        e.target.style.background = isSub
           ? "linear-gradient(to bottom, #a99 65%, #f80 65%)"
           : "linear-gradient(to bottom, #f80 65%, #777 65%)";
-        if (low) {
-          // If the current chord contains b5 or #5, drop a tritone instead of a fourth.
-          const amt =
-            lastVoicing && lastVoicing.some((v) => v % 12 === 6 || v % 12 === 8)
-              ? 6
-              : 5;
-          freq = bassFreq(noteNameToSemitone(note) - amt);
+        if (isSub) {
+          freq = bassFreq(noteNameToSemitone(note) - subSemitones());
         }
       } else {
         e.target.style.background = "#f80";
@@ -172,13 +175,16 @@ window.addEventListener("DOMContentLoaded", (event) => {
         centerY: centerY,
         note: e.target.innerText,
         target: e.target,
-        oscs: [makeOsc(freq / 2, 0.5 * bassGain, 0)],
+        isBass: true,
+        rootSemitone: noteNameToSemitone(note),
+        isSub,
+        oscs: [makeOsc(freq, 0.5 * bassGain, 0)],
       });
 
+      // Correct chord voicing to this new bass note
       for (const v of pointers.values()) {
         if (v.voicing) {
           for (let i = 0; i < v.voicing.length; i++) {
-            // v.oscs[i].frequency.value = chordFreq(v.voicing[i]);
             v.oscs[i].playbackRate.value =
               chordFreq(v.voicing[i]) / v.oscs[i].autokalimbaSampleBaseFreq;
           }
@@ -231,6 +237,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         centerY: rect.top + rect.height / 2,
         note: e.target.innerText,
         target: e.target,
+        isBass: false,
         voicing: lastVoicing,
         oscs: freqs.map((freq, i) => {
           const n = freqs.length;
@@ -247,6 +254,17 @@ window.addEventListener("DOMContentLoaded", (event) => {
           return makeOsc(freq, 0.2 * chordGain, delay);
         }),
       });
+
+      // Correct bass sub to this new chord voicing
+      for (const v of pointers.values()) {
+        if (v.isBass && v.isSub) {
+          for (let i = 0; i < v.oscs.length; i++) {
+            v.oscs[i].playbackRate.value =
+              bassFreq(v.rootSemitone - subSemitones()) /
+              v.oscs[i].autokalimbaSampleBaseFreq;
+          }
+        }
+      }
     });
     b.addEventListener("pointermove", (e) => {
       const p = pointers.get(e.pointerId);
