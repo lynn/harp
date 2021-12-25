@@ -55,6 +55,10 @@ function loadInstrument(instrument) {
 
 loadInstrument(instruments["Guitar"]);
 
+function getTuningSemitones() {
+  return $("#tuning").value / 100;
+}
+
 function chordFreq(semitones) {
   let k = currentBass * 2 ** (semitones / 12);
   if (k < 250) k *= 2;
@@ -63,8 +67,10 @@ function chordFreq(semitones) {
 }
 
 function bassFreq(semitones) {
+  const st = semitones + getTuningSemitones();
   const base = Number($("#base").value);
-  const wrapped = ((semitones + 1200 - base) % 12) + base;
+  const wrapped = ((st + 1200 - base) % 12) + base;
+  console.log("bass", getTuningSemitones(), st, base, wrapped);
   return 110 * 2 ** (wrapped / 12);
 }
 
@@ -139,6 +145,13 @@ window.addEventListener("DOMContentLoaded", (event) => {
   $("#strum").onchange = (e) => {
     strumSetting = e.target.value;
   };
+  $("#hue").oninput = $("#hue").onchange = (e) => {
+    document.body.style.filter = `hue-rotate(${e.target.value}deg)`;
+  };
+  $("#tuning").oninput = $("#tuning").onchange = (e) => {
+    const n = e.target.value;
+    $("#tuning-value").innerText = `${n > 0 ? "+" : ""}${n}¢`;
+  };
   const bass = $(".bass");
   const bassButtons = [...$$(".bass-button")];
 
@@ -161,8 +174,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
       if ($("#split-keys").checked) {
         isSub = e.clientY > rect.top + rect.height * 0.65;
         e.target.style.background = isSub
-          ? "linear-gradient(to bottom, #a99 65%, #f80 65%)"
-          : "linear-gradient(to bottom, #f80 65%, #777 65%)";
+          ? "linear-gradient(to bottom, var(--button) 65%, var(--active) 65%)"
+          : "linear-gradient(to bottom, var(--active) 65%, var(--button-split) 65%)";
         if (isSub) {
           freq = bassFreq(noteNameToSemitone(note) - subSemitones());
         }

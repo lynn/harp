@@ -32,6 +32,10 @@
     <input type="checkbox" id="horizontal-chords"></input>
     <label for="horizontal-chords">Horizontal chords</label>
     <br>
+    <label for="tuning">Tuning</label>
+    <input type="range" id="tuning" min="-50" max="50" value="0" step="2">
+    <output id="tuning-value">0</output>
+    <br>
     <label for="bass-gain">Bass volume</label>
     <input type="range" id="bass-gain" min="0" max="2" value="1" step="0.05">
     <br>
@@ -52,6 +56,9 @@
     <select name="instrument" id="select-instrument">
       <!-- populated by javascript -->
     </select>
+    <br>
+    <label for="hue">Hue</label>
+    <input type="range" id="hue" min="-180" max="180" value="0" step="1">
     <br>
     <a href="https://ko-fi.com/chordbug">Donate</a>
     <br>
@@ -90,6 +97,7 @@
         </div>
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 11 12 16">Δ</div>
+          <!-- <div class="button chord-button" data-chord="7 11 12 15">mΔ</div> -->
           <div class="button chord-button" data-chord="7 10 12 15">m7</div>
           <div class="button chord-button" data-chord="7 10 12 16">7</div>
           <div class="button chord-button" data-chord="8 10 12 16">7#5</div>
@@ -97,6 +105,7 @@
         </div>
         <div class="chord-column">
           <div class="button chord-button" data-chord="7 9 12 16">6</div>
+          <!-- <div class="button chord-button" data-chord="7 12 16">maj</div> -->
           <!-- <div class="button chord-button" data-chord="up">&uarr;</div> -->
           <div class="button chord-button" data-chord="7 9 12 15">m6</div>
           <div class="button chord-button" data-chord="6 10 12 15">ø</div>

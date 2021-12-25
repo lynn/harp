@@ -2,6 +2,13 @@
   box-sizing: border-box;
 }
 
+:root {
+  --background: pink;
+  --button: #aa9999;
+  --button-split: #99888f;
+  --active: #ff8833;
+}
+
 html {
   height: 100%;
   width: 100%;
@@ -9,15 +16,16 @@ html {
 
 body {
   font-family: "DejaVu Sans", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: pink;
+  background-color: var(--background);
   width: 100%;
   height: 100%;
   margin: 0;
   touch-action: pan-x pan-y pinch-zoom;
+  filter: hue-rotate(0deg);
 }
 
 .container {
-  background-color: pink;
+  background-color: var(--background);
   margin: auto;
   padding: 0px 10px;
   position: absolute;
@@ -32,7 +40,7 @@ body {
   left: 0;
   bottom: 0;
   right: 0;
-  background: pink;
+  background: var(--background);
   position: absolute;
   display: flex;
   justify-content: space-between;
@@ -84,9 +92,10 @@ body {
   width: 80px;
   border-radius: 20px;
   margin: 1px;
-  background: #a99;
-  font-size: 40px;
+  background: var(--button);
+  font-size: 36px;
   color: white;
+  letter-spacing: -1px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -168,7 +177,11 @@ label[for="settings"] {
 }
 
 #split-keys:checked ~ .controls .button.bass-button {
-  background: linear-gradient(to bottom, #a99 65%, #777 65%);
+  background: linear-gradient(
+    to bottom,
+    var(--button) 65%,
+    var(--button-split) 65%
+  );
 }
 
 #horizontal-chords:checked ~ .controls .chords {
