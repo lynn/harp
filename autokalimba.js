@@ -17,6 +17,7 @@ let chordGain = 1.0;
 
 let lastFreqs = undefined;
 let lastVoicing = undefined;
+let lastBassTime = Date.now();
 
 function subSemitones() {
   // If the last voicing contains b5 or #5, drop a tritone; otherwise, drop a fourth.
@@ -27,33 +28,53 @@ function subSemitones() {
 
 let instruments = {
   Guitar: {
+    lo: 250,
+    hi: 650,
     samples: [{ name: "guitar.wav", freq: 110 }],
   },
   Kalimba: {
+    lo: 250,
+    hi: 650,
     samples: [{ name: "kalimba.wav", freq: 220 }],
   },
   Rhodes: {
+    lo: 250,
+    hi: 650,
     samples: [
-      { name: "rhodes-low.mp3", freq: 110 },
+      { name: "rhodes-low.mp3", freq: 110, bassOnly: true },
       { name: "rhodes-high.mp3", freq: 329 },
+    ],
+  },
+  Toy: {
+    lo: 300,
+    hi: 700,
+    samples: [
+      { name: "toy-bass.wav", freq: 110, bassOnly: true },
+      { name: "toy-acc.wav", freq: 440 },
     ],
   },
 };
 
 function loadInstrument(instrument) {
   sampleBuffers.length = 0;
+  console.log(instrument);
   instrument.samples.map((s, i) => {
     fetch("instruments/" + s.name).then(async (r) => {
       const blob = await r.blob();
       const ab = await blob.arrayBuffer();
       ctx.decodeAudioData(ab, (buffer) => {
-        sampleBuffers[i] = { buffer, freq: s.freq };
+        sampleBuffers[i] = {
+          buffer,
+          freq: s.freq,
+          bassOnly: s.bassOnly ?? false,
+        };
+        console.log("set sampleBuffers", i, s.name);
       });
     });
   });
 }
 
-loadInstrument(instruments["Guitar"]);
+let currentInstrument = instruments["Guitar"];
 
 function getTuningSemitones() {
   return $("#tuning").value / 100;
@@ -61,8 +82,8 @@ function getTuningSemitones() {
 
 function chordFreq(semitones) {
   let k = currentBass * 2 ** (semitones / 12);
-  if (k < 250) k *= 2;
-  if (k > 650) k /= 2;
+  if (k < currentInstrument.lo) k *= 2;
+  if (k > currentInstrument.hi) k /= 2;
   return k;
 }
 
@@ -80,7 +101,7 @@ function noteNameToSemitone(note) {
   );
 }
 
-function makeOsc(freq, gainValue, delay) {
+function makeOsc(freq, gainValue, delay, isBass) {
   const osc = ctx.createBufferSource();
   const gain = ctx.createGain();
   gain.gain.value = gainValue;
@@ -88,6 +109,7 @@ function makeOsc(freq, gainValue, delay) {
   let closestDifference = 9e99;
   for (const b of sampleBuffers) {
     const difference = Math.abs(freq - b.freq);
+    if (b.bassOnly && !isBass) continue;
     if (difference < closestDifference) {
       closestBuffer = b;
       closestDifference = difference;
@@ -134,7 +156,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     $("#select-instrument").appendChild(option);
   }
   $("#select-instrument").onchange = (e) => {
-    loadInstrument(instruments[e.target.value]);
+    loadInstrument((currentInstrument = instruments[e.target.value]));
   };
   $("#bass-gain").onchange = (e) => {
     bassGain = e.target.value;
@@ -170,6 +192,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
       let freq = bassFreq(noteNameToSemitone(note));
       let isSub = false;
       currentBass = freq;
+      lastBassTime = Date.now();
 
       if ($("#split-keys").checked) {
         isSub = e.clientY > rect.top + rect.height * 0.65;
@@ -191,7 +214,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         isBass: true,
         rootSemitone: noteNameToSemitone(note),
         isSub,
-        oscs: [makeOsc(freq, 0.5 * bassGain, 0)],
+        oscs: [makeOsc(freq, 0.5 * bassGain, 0, true)],
       });
 
       // Correct chord voicing to this new bass note
@@ -257,14 +280,16 @@ window.addEventListener("DOMContentLoaded", (event) => {
           const style = $("#select-strum-style").value;
           const tinyRandom = 1 + (Math.random() - 0.5) * 0.23;
           const delay =
-            style === "random"
+            style === "timed"
+              ? ((Date.now() - lastBassTime) / 1e3) * [0, 1, 2, 1][i]
+              : style === "random"
               ? strumSetting * Math.random()
               : style === "up"
               ? ((strumSetting * i) / n) * tinyRandom
               : style === "down"
               ? ((strumSetting * (n - 1 - i)) / n) * tinyRandom
               : 0;
-          return makeOsc(freq, 0.2 * chordGain, delay);
+          return makeOsc(freq, 0.2 * chordGain, delay, false);
         }),
       });
 
@@ -335,7 +360,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
     // Don't remember the settings toggle itself.
     if (el.id === "settings") return;
     const key = "autokalimba-" + el.id;
-    const value = window.localStorage.getItem(key);
+    let value = window.localStorage.getItem(key);
+    if (el.id === "select-instrument") value ??= "Rhodes";
     if (value !== null && value !== undefined) {
       el.value = value;
       if (el.onchange) el.onchange({ target: el });
