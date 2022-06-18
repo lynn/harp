@@ -14,6 +14,7 @@ let strumSetting = 0.04;
 
 let bassGain = 1.0;
 let chordGain = 1.0;
+let bend = false;
 
 let lastFreqs = undefined;
 let lastVoicing = undefined;
@@ -53,11 +54,24 @@ let instruments = {
       { name: "toy-acc.wav", freq: 440 },
     ],
   },
+  Piano: {
+    lo: 250,
+    hi: 650,
+    samples: [
+      // { name: "piano-cs2.wav", freq: 69.30, bassOnly: true },
+      { name: "piano-cs3.wav", freq: 138.59, bassOnly: false },
+      { name: "piano-f4.wav", freq: 698.46 / 2 },
+    ],
+  },
+  Fluffy: {
+    lo: 200,
+    hi: 550,
+    samples: [{ name: "fluffypiano.wav", freq: 261.63 }],
+  },
 };
 
 function loadInstrument(instrument) {
   sampleBuffers.length = 0;
-  console.log(instrument);
   instrument.samples.map((s, i) => {
     fetch("instruments/" + s.name).then(async (r) => {
       const blob = await r.blob();
@@ -68,7 +82,6 @@ function loadInstrument(instrument) {
           freq: s.freq,
           bassOnly: s.bassOnly ?? false,
         };
-        console.log("set sampleBuffers", i, s.name);
       });
     });
   });
@@ -81,6 +94,11 @@ function getTuningSemitones() {
 }
 
 function chordFreq(semitones) {
+  // if (bend) {
+  //   if (semitones === 3 || semitones === 4) semitones = 2;
+  //   if (semitones === 15 || semitones === 16) semitones = 14;
+  // }
+
   let k = currentBass * 2 ** (semitones / 12);
   if (k < currentInstrument.lo) k *= 2;
   if (k > currentInstrument.hi) k /= 2;
@@ -91,7 +109,6 @@ function bassFreq(semitones) {
   const st = semitones + getTuningSemitones();
   const base = Number($("#base").value);
   const wrapped = ((st + 1200 - base) % 12) + base;
-  console.log("bass", getTuningSemitones(), st, base, wrapped);
   return 110 * 2 ** (wrapped / 12);
 }
 
@@ -135,8 +152,38 @@ function makeOsc(freq, gainValue, delay, isBass) {
   return osc;
 }
 
+function recomputeKeyLabels() {
+  const keys = $$(".bass-button");
+  const transpose = Number($("#transpose").value);
+  const sharps = Number($("#sharps").value);
+  console.log(keys);
+  const labels = [
+    "A",
+    sharps > 4 ? "A#" : "Bb",
+    "B",
+    "C",
+    sharps > 1 ? "C#" : "Db",
+    "D",
+    sharps > 3 ? "D#" : "Eb",
+    "E",
+    "F",
+    sharps > 0 ? "F#" : "Gb",
+    "G",
+    sharps > 2 ? "G#" : "Ab",
+  ];
+  keys.forEach((e, i) => {
+    // i += transpose - 4;
+    // const label =
+    //   "FCGDAEB"[((i % 7) + 7) % 7] +
+    //   "#".repeat(Math.max(0, Math.floor(i / 7))) +
+    //   "b".repeat(-Math.min(0, Math.floor(i / 7)));
+    e.innerText = labels[(i * 7 + 16 + transpose) % 12];
+  });
+}
+
 window.addEventListener("DOMContentLoaded", (event) => {
   if (/harp/.test(window.location.href)) $(".refresh-link").remove();
+  recomputeKeyLabels();
 
   const fullscreenButton = $(".fullscreen-button");
   if (document.fullscreenEnabled) {
@@ -165,7 +212,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     chordGain = e.target.value;
   };
   $("#strum").onchange = (e) => {
-    strumSetting = e.target.value;
+    strumSetting = Number(e.target.value);
   };
   $("#hue").oninput = $("#hue").onchange = (e) => {
     document.body.style.filter = `hue-rotate(${e.target.value}deg)`;
@@ -173,6 +220,14 @@ window.addEventListener("DOMContentLoaded", (event) => {
   $("#tuning").oninput = $("#tuning").onchange = (e) => {
     const n = e.target.value;
     $("#tuning-value").innerText = `${n > 0 ? "+" : ""}${n}¢`;
+  };
+  $("#transpose").oninput = $("#transpose").onchange = (e) => {
+    $("#transpose-value").innerText = e.target.value;
+    recomputeKeyLabels();
+  };
+  $("#sharps").oninput = $("#sharps").onchange = (e) => {
+    $("#sharps-value").innerText = e.target.value;
+    recomputeKeyLabels();
   };
   const bass = $(".bass");
   const bassButtons = [...$$(".bass-button")];
@@ -260,7 +315,6 @@ window.addEventListener("DOMContentLoaded", (event) => {
       if (attr === "up") {
         freqs = lastFreqs;
         freqs.push(freqs.shift() * 2);
-        console.log(lastFreqs, freqs);
         lastFreqs = freqs;
       } else {
         freqs = voicing.map((f) => chordFreq(f)).sort((a, b) => a - b);
@@ -319,12 +373,46 @@ window.addEventListener("DOMContentLoaded", (event) => {
     });
   }
 
+  function recalc() {
+    // Correct chord voicing to this new bass note
+    for (const v of pointers.values()) {
+      if (v.voicing) {
+        for (let i = 0; i < v.voicing.length; i++) {
+          v.oscs[i].playbackRate.value =
+            chordFreq(v.voicing[i]) / v.oscs[i].autokalimbaSampleBaseFreq;
+        }
+      }
+    }
+  }
+
   // const bassKb = "1qaz2wsx3edc";
   const bassKb = "2wsx3edc4rfv";
   const chordKb = "yuiophjkl;nm,./";
   document.addEventListener("keydown", (e) => {
-    const i = bassKb.indexOf(e.key);
+    const i = bassKb.indexOf(e.key.toLowerCase());
     if (e.repeat) return;
+    if (e.key === "Shift") {
+      bend = true;
+      recalc();
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    if (e.key === "[" || e.key === "]") {
+      const delta = e.key === "[" ? -1 : 1;
+      $("#transpose").value = Number($("#transpose").value) + delta;
+      $("#transpose").onchange({
+        target: { value: Number($("#transpose").value) },
+      });
+    }
+    if (e.key === "{" || e.key === "}") {
+      const delta = e.key === "{" ? -1 : 1;
+      $("#sharps").value = Number($("#sharps").value) + delta;
+      $("#sharps").onchange({
+        target: { value: Number($("#sharps").value) },
+      });
+    }
+
     if (i >= 0) {
       const target = bassButtons[i];
       target.dispatchEvent(
@@ -334,7 +422,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         })
       );
     }
-    const j = chordKb.indexOf(e.key);
+    const j = chordKb.indexOf(e.key.toLowerCase());
     if (j >= 0) {
       const target = chordButtons[j];
       target.dispatchEvent(
@@ -346,11 +434,17 @@ window.addEventListener("DOMContentLoaded", (event) => {
     }
   });
   document.addEventListener("keyup", (e) => {
-    const i = bassKb.indexOf(e.key);
+    if (e.key === "Shift") {
+      bend = false;
+      recalc();
+      return;
+    }
+
+    const i = bassKb.indexOf(e.key.toLowerCase());
     if (i >= 0) {
       stop(999 + i);
     }
-    const j = chordKb.indexOf(e.key);
+    const j = chordKb.indexOf(e.key.toLowerCase());
     if (j >= 0) {
       stop(1999 + j);
     }

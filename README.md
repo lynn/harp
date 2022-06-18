@@ -16,13 +16,14 @@ Or listen here: ✨ https://twitter.com/search?q=%23autokalimba&f=video ✨
 
 ## Un-features
 * Triads
-* …
-* Okay, I might add an “uncomplicated chords mode” if people really want it, but their omission is deliberate.
 
 ## Instrument credits
 * **Guitar**: [SpeedY on freesound](https://freesound.org/people/SpeedY/sounds/8383/).
 * **Kalimba**: [arioke on freesound](https://freesound.org/people/arioke/sounds/58729/).
 * **Rhodes**: tim.kahn on freesound ([low](https://freesound.org/people/tim.kahn/sounds/65755/), [high](https://freesound.org/people/tim.kahn/sounds/65726/)).
+* **Toy**: From the Mario Paint soundfont.
+* **Piano**: [Samulis on freesound](https://freesound.org/people/Samulis/packs/21055/?page=2#sound).
+* **Fluffy**: From the Animal Crossing soundfont.
 
 ## FAQ
 
