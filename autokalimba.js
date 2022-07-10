@@ -68,6 +68,14 @@ let instruments = {
     hi: 550,
     samples: [{ name: "fluffypiano.wav", freq: 261.63 }],
   },
+  FM: {
+    lo: 250,
+    hi: 650,
+    samples: [
+        { name: "fm-bass-c2.wav", freq: 65, bassOnly: true },
+        { name: "fm-epiano-c5.wav", freq: 543, bassOnly: false },
+    ],
+  },
 };
 
 function loadInstrument(instrument) {

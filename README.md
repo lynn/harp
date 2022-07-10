@@ -24,6 +24,7 @@ Or listen here: ✨ https://twitter.com/search?q=%23autokalimba&f=video ✨
 * **Toy**: From the Mario Paint soundfont.
 * **Piano**: [Samulis on freesound](https://freesound.org/people/Samulis/packs/21055/?page=2#sound).
 * **Fluffy**: From the Animal Crossing soundfont.
+* **FM**: From a certain popular FM synthesizer.
 
 ## FAQ
 
