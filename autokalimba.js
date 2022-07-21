@@ -76,6 +76,7 @@ let instruments = {
         { name: "fm-epiano-c5.wav", freq: 543, bassOnly: false },
     ],
   },
+  Honk: { lo: 250, hi: 650, samples: [{ name: "honk.wav", freq: 365 }] },
 };
 
 function loadInstrument(instrument) {
