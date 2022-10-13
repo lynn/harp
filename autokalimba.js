@@ -19,6 +19,7 @@ let bend = false;
 let lastFreqs = undefined;
 let lastVoicing = undefined;
 let lastBassTime = Date.now();
+let forceFifthInBass = false;
 
 function subSemitones() {
   // If the last voicing contains b5 or #5, drop a tritone; otherwise, drop a fourth.
@@ -77,9 +78,11 @@ let instruments = {
     ],
   },
   Honk: { lo: 250, hi: 650, samples: [{ name: "honk.wav", freq: 365 }] },
+  Subtractive: { lo: 250, hi: 650, samples: [{ name: "meow.wav", freq: 261.63 }] },
 };
 
 function loadInstrument(instrument) {
+  if (!instrument) return;
   sampleBuffers.length = 0;
   instrument.samples.map((s, i) => {
     fetch("instruments/" + s.name).then(async (r) => {
@@ -165,7 +168,6 @@ function recomputeKeyLabels() {
   const keys = $$(".bass-button");
   const transpose = Number($("#transpose").value);
   const sharps = Number($("#sharps").value);
-  console.log(keys);
   const labels = [
     "A",
     sharps > 4 ? "A#" : "Bb",
@@ -258,11 +260,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
       currentBass = freq;
       lastBassTime = Date.now();
 
-      if ($("#split-keys").checked) {
-        isSub = e.clientY > rect.top + rect.height * 0.65;
+      if (forceFifthInBass || $("#split-keys").checked) {
+        isSub = forceFifthInBass || e.clientY > rect.top + rect.height * 0.65;
         e.target.style.background = isSub
           ? "linear-gradient(to bottom, var(--button) 65%, var(--active) 65%)"
-          : "linear-gradient(to bottom, var(--active) 65%, var(--button-split) 65%)";
+          : $("#split-keys").checked ? "linear-gradient(to bottom, var(--active) 65%, var(--button-split) 65%)" : "var(--button)";
         if (isSub) {
           freq = bassFreq(noteNameToSemitone(note) - subSemitones());
         }
@@ -397,8 +399,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
   // const bassKb = "1qaz2wsx3edc";
   const bassKb = "2wsx3edc4rfv";
   const chordKb = "yuiophjkl;nm,./";
+  let bassKbIndex = 0;
   document.addEventListener("keydown", (e) => {
-    const i = bassKb.indexOf(e.key.toLowerCase());
     if (e.repeat) return;
     if (e.key === "Shift") {
       bend = true;
@@ -413,6 +415,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
       $("#transpose").onchange({
         target: { value: Number($("#transpose").value) },
       });
+      return;
     }
     if (e.key === "{" || e.key === "}") {
       const delta = e.key === "{" ? -1 : 1;
@@ -420,17 +423,33 @@ window.addEventListener("DOMContentLoaded", (event) => {
       $("#sharps").onchange({
         target: { value: Number($("#sharps").value) },
       });
+      return;
     }
 
+    const i = bassKb.indexOf(e.key.toLowerCase());
     if (i >= 0) {
-      const target = bassButtons[i];
+      bassKbIndex = i;
+      const target = bassButtons[bassKbIndex];
       target.dispatchEvent(
         new PointerEvent("pointerdown", {
-          pointerId: 999 + i,
+          pointerId: 999 + bassKbIndex,
           isPrimary: true,
         })
       );
     }
+
+    if (e.key === " ") {
+      stop(999 + bassKbIndex);
+      forceFifthInBass = true;
+      bassButtons[bassKbIndex].dispatchEvent(
+        new PointerEvent("pointerdown", {
+          pointerId: 999 + bassKbIndex,
+          isPrimary: true,
+        })
+      );
+      forceFifthInBass = false;
+    }
+
     const j = chordKb.indexOf(e.key.toLowerCase());
     if (j >= 0) {
       const target = chordButtons[j];
@@ -447,6 +466,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
       bend = false;
       recalc();
       return;
+    }
+
+    if (e.key === " ") {
+      // ugh idk
+      for (let k = 0; k < 12; k++) stop(999 + k);
     }
 
     const i = bassKb.indexOf(e.key.toLowerCase());
