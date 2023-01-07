@@ -4,8 +4,19 @@ const $$ = (x) => document.querySelectorAll(x);
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const ctx = new AudioContext();
 const mix = ctx.createGain();
+const pre = ctx.createGain();
+const cps = new DynamicsCompressorNode(ctx, {
+  threshold: -5.0,
+  knee: 0,
+  ratio: 40.0,
+  attack: 0.001,
+  release: 0.1,
+});
+pre.connect(cps);
+cps.connect(mix);
 mix.connect(ctx.destination);
-mix.gain.value = 1.0;
+// mix.gain.value = 1.0;
+mix.gain.value = 0.7;
 const pointers = new Map();
 let currentBass = 220.0;
 // let frozenBass = 220.0;
@@ -157,7 +168,8 @@ function makeOsc(freq, gainValue, delay, isBass) {
   osc.buffer = closestBuffer.buffer;
   osc.connect(gain);
   osc.gainNode = gain;
-  gain.connect(mix);
+  // gain.connect(mix);
+  gain.connect(pre);
   osc.playbackRate.value = freq / closestBuffer.freq;
   osc.autokalimbaSampleBaseFreq = closestBuffer.freq;
   osc.start(ctx.currentTime + delay);
@@ -302,7 +314,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
     const p = pointers.get(pointerId);
     if (!p) return;
     for (const osc of p.oscs) {
-      osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.01);
+      // osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.01);
+      osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime + 0.05, 0.01);
       osc.stop(ctx.currentTime + 0.2);
     }
     p.target.style.background = "";
@@ -400,14 +413,22 @@ window.addEventListener("DOMContentLoaded", (event) => {
   const bassKb = "2wsx3edc4rfv";
   const chordKb = "yuiophjkl;nm,./";
   let bassKbIndex = 0;
+  let fifthIndex = -1;
+  let keysDown = {};
   document.addEventListener("keydown", (e) => {
-    if (e.repeat) return;
+    // if (e.repeat) return;
+    if (keysDown[e.key] == true) return;
+    keysDown[e.key] = true;
     if (e.key === "Shift") {
       bend = true;
       recalc();
       return;
     }
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      e.preventDefault();
+      return;
+    }
 
     if (e.key === "[" || e.key === "]") {
       const delta = e.key === "[" ? -1 : 1;
@@ -429,6 +450,10 @@ window.addEventListener("DOMContentLoaded", (event) => {
     const i = bassKb.indexOf(e.key.toLowerCase());
     if (i >= 0) {
       bassKbIndex = i;
+      if (fifthIndex == bassKbIndex) {
+        stop(999 + fifthIndex)
+        fifthIndex = -1;
+      }
       const target = bassButtons[bassKbIndex];
       target.dispatchEvent(
         new PointerEvent("pointerdown", {
@@ -441,6 +466,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     if (e.key === " ") {
       stop(999 + bassKbIndex);
       forceFifthInBass = true;
+      fifthIndex = bassKbIndex;
       bassButtons[bassKbIndex].dispatchEvent(
         new PointerEvent("pointerdown", {
           pointerId: 999 + bassKbIndex,
@@ -462,6 +488,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     }
   });
   document.addEventListener("keyup", (e) => {
+    keysDown[e.key] = false;
     if (e.key === "Shift") {
       bend = false;
       recalc();
@@ -470,17 +497,31 @@ window.addEventListener("DOMContentLoaded", (event) => {
 
     if (e.key === " ") {
       // ugh idk
-      for (let k = 0; k < 12; k++) stop(999 + k);
+      // for (let k = 0; k < 12; k++) stop(999 + k);
+      if (fifthIndex >= 0) {
+        stop(999 + fifthIndex);
+      }
     }
 
     const i = bassKb.indexOf(e.key.toLowerCase());
-    if (i >= 0) {
+    if (i >= 0 && i != fifthIndex) {
       stop(999 + i);
     }
     const j = chordKb.indexOf(e.key.toLowerCase());
     if (j >= 0) {
       stop(1999 + j);
     }
+  });
+  // Stop all keys when window loses focus
+  window.addEventListener("blur", () => {
+    keysDown = {};
+    for (let k = 0; k < 12; k++) stop(999 + k);
+    for (let k = 0; k < 15; k++) stop(1999 + k);
+  });
+
+  const checkbox = $("#settings");
+  checkbox.addEventListener("click", () => {
+    checkbox.blur();
   });
 
   $$("input, select").forEach((el) => {
