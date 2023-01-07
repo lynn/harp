@@ -5,13 +5,7 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 const ctx = new AudioContext();
 const mix = ctx.createGain();
 const pre = ctx.createGain();
-const cps = new DynamicsCompressorNode(ctx, {
-  threshold: -5.0,
-  knee: 0,
-  ratio: 40.0,
-  attack: 0.001,
-  release: 0.1,
-});
+const cps = ctx.createDynamicsCompressor();
 pre.connect(cps);
 cps.connect(mix);
 mix.connect(ctx.destination);
