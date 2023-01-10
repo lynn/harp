@@ -82,8 +82,31 @@ let instruments = {
         { name: "fm-epiano-c5.wav", freq: 543, bassOnly: false },
     ],
   },
-  Honk: { lo: 250, hi: 650, samples: [{ name: "honk.wav", freq: 365 }] },
-  Subtractive: { lo: 250, hi: 650, samples: [{ name: "meow.wav", freq: 261.63 }] },
+  Honk: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "honk.wav", freq: 365 }],
+  },
+  Subtractive: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "meow.wav", freq: 261.63 }],
+  },
+  Marimba: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "marimba.wav", freq: 246.94 }],
+  },
+  Musicbox: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "musicbox.wav", freq: 311.13 }],
+  },
+  Ocarina: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "ocarina.wav", freq: 261.63 }],
+  },
 };
 
 function loadInstrument(instrument) {
@@ -511,6 +534,9 @@ window.addEventListener("DOMContentLoaded", (event) => {
     keysDown = {};
     for (let k = 0; k < 12; k++) stop(999 + k);
     for (let k = 0; k < 15; k++) stop(1999 + k);
+  });
+  document.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
   });
 
   const checkbox = $("#settings");
