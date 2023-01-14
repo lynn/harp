@@ -49,7 +49,7 @@ let instruments = {
     hi: 650,
     samples: [
       { name: "rhodes-low.mp3", freq: 110, bassOnly: true },
-      { name: "rhodes-high.mp3", freq: 329 },
+      { name: "rhodes-high.wav", freq: 329 },
     ],
   },
   Toy: {
@@ -97,15 +97,65 @@ let instruments = {
     hi: 650,
     samples: [{ name: "marimba.wav", freq: 246.94 }],
   },
-  Musicbox: {
+  Carillon: {
     lo: 250,
     hi: 650,
     samples: [{ name: "musicbox.wav", freq: 311.13 }],
   },
-  Ocarina: {
+  Stab: {
     lo: 250,
     hi: 650,
-    samples: [{ name: "ocarina.wav", freq: 261.63 }],
+    samples: [{ name: "synthbass1.wav", freq: 55 }],
+  },
+  Pluck: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "synthbass2.wav", freq: 55 }],
+  },
+  Musicbox: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "musicbox1.wav", freq: 440 / 2 }],
+  },
+  Bass: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "acousticbass1.wav", freq: 55 * 2 }],
+  },
+  Saw: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "saw.wav", freq: 110 / 2 }],
+  },
+  Wah: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "wah1.wav", freq: 440 / 2 }],
+  },
+  Pan: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "pan.wav", freq: 440 / 2 }],
+  },
+  Beep: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "beep.wav", freq: 440 / 2 }],
+  },
+  Vibraphone: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "vibraphone.wav", freq: 440 / 2 }],
+  },
+  Sine: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "sine.wav", freq: 440 / 2 }],
+  },
+  UFO: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "ufo.wav", freq: 440 / 2 }],
   },
 };
 
