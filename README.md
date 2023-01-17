@@ -36,7 +36,7 @@ Or listen here: ✨ https://twitter.com/search?q=%23autokalimba&f=video ✨
 * **Saw**: From the Animal Crossing: New Horizons soundfont.
 * **Wah**: From the Animal Crossing: New Horizons soundfont.
 * **Pan**: From the Animal Crossing: New Horizons soundfont.
-* **Beep**: From a certain subtractive synthesizer that has 3 oscillators.
+* **Beep**: From a certain subtractive 3-oscillator synthesizer.
 * **Vibraphone**: From the Wii Music soundfont.
 * **Sine**: From the Wii menu soundfont.
 * **UFO**: From a certain pluck preset.
