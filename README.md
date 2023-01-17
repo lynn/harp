@@ -39,7 +39,7 @@ Or listen here: ✨ https://twitter.com/search?q=%23autokalimba&f=video ✨
 * **Beep**: From a certain subtractive synthesizer that has 3 oscillators.
 * **Vibraphone**: From the Wii Music soundfont.
 * **Sine**: From the Wii menu soundfont.
-* **UFO**: From a certain Pluck preset.
+* **UFO**: From a certain pluck preset.
 
 ## FAQ
 
