@@ -25,6 +25,21 @@ Or listen here: ✨ https://twitter.com/search?q=%23autokalimba&f=video ✨
 * **Piano**: [Samulis on freesound](https://freesound.org/people/Samulis/packs/21055/?page=2#sound).
 * **Fluffy**: From the Animal Crossing soundfont.
 * **FM**: From a certain popular FM synthesizer.
+* **Honk**: 
+* **Subtractive**: 
+* **Marimba**: [Samulis on freesound](https://freesound.org/people/Samulis/sounds/373577/).
+* **Carillon**: [UbikPhonik on freesound](https://freesound.org/people/UbikPhonik/sounds/177954/).
+* **Stab**: From the FluidR3_GM soundfont.
+* **Pluck**: From the FluidR3_GM soundfont.
+* **Musicbox**: From the FluidR3_GM soundfont.
+* **Bass**: From the FluidR3_GM soundfont.
+* **Saw**: From the Animal Crossing: New Horizons soundfont.
+* **Wah**: From the Animal Crossing: New Horizons soundfont.
+* **Pan**: From the Animal Crossing: New Horizons soundfont.
+* **Beep**: From a certain subtractive synthesizer with 3 oscillators.
+* **Vibraphone**: From the Wii Music soundfont.
+* **Sine**: From the Wii menu soundfont.
+* **Ufo**: From a certain Pluck preset.
 
 ## FAQ
 
