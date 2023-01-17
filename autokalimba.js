@@ -48,7 +48,7 @@ let instruments = {
     lo: 250,
     hi: 650,
     samples: [
-      { name: "rhodes-low.mp3", freq: 110, bassOnly: true },
+      { name: "rhodes-low.wav", freq: 110, bassOnly: true },
       { name: "rhodes-high.wav", freq: 329 },
     ],
   },
