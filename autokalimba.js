@@ -97,30 +97,15 @@ let instruments = {
     hi: 650,
     samples: [{ name: "marimba.wav", freq: 246.94 }],
   },
-  Carillon: {
+  Musicbox: {
     lo: 250,
     hi: 650,
     samples: [{ name: "musicbox.wav", freq: 311.13 }],
   },
-  Stab: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "synthbass1.wav", freq: 55 }],
-  },
-  Pluck: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "synthbass2.wav", freq: 55 }],
-  },
-  Musicbox: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "musicbox1.wav", freq: 440 / 2 }],
-  },
   Bass: {
     lo: 250,
     hi: 650,
-    samples: [{ name: "acousticbass1.wav", freq: 55 * 2 }],
+    samples: [{ name: "bass.wav", freq: 55 * 2 }],
   },
   Saw: {
     lo: 250,
@@ -130,17 +115,12 @@ let instruments = {
   Wah: {
     lo: 250,
     hi: 650,
-    samples: [{ name: "wah1.wav", freq: 440 / 2 }],
+    samples: [{ name: "wah.wav", freq: 440 / 2 }],
   },
   Pan: {
     lo: 250,
     hi: 650,
     samples: [{ name: "pan.wav", freq: 440 / 2 }],
-  },
-  Beep: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "beep.wav", freq: 440 / 2 }],
   },
   Vibraphone: {
     lo: 250,
@@ -151,11 +131,6 @@ let instruments = {
     lo: 250,
     hi: 650,
     samples: [{ name: "sine.wav", freq: 440 / 2 }],
-  },
-  UFO: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "ufo.wav", freq: 440 / 2 }],
   },
 };
 
@@ -304,17 +279,25 @@ window.addEventListener("DOMContentLoaded", (event) => {
   $("#strum").onchange = (e) => {
     strumSetting = Number(e.target.value);
   };
+  // Random initial hue
+  let rval = Math.floor(Math.random() * 180) * (Math.random() < 0.5 ? -1 : 1);
+  $("#hue").value = rval;
+  document.body.style.filter = `hue-rotate(${rval}deg)`;
   $("#hue").oninput = $("#hue").onchange = (e) => {
     document.body.style.filter = `hue-rotate(${e.target.value}deg)`;
   };
+  // Initial tuning-value text
+  $("#tuning-value").innerText = `+0¢`
   $("#tuning").oninput = $("#tuning").onchange = (e) => {
     const n = e.target.value;
-    $("#tuning-value").innerText = `${n > 0 ? "+" : ""}${n}¢`;
+    $("#tuning-value").innerText = `${n > -1 ? "+" : ""}${n}¢`;
   };
   $("#transpose").oninput = $("#transpose").onchange = (e) => {
     $("#transpose-value").innerText = e.target.value;
     recomputeKeyLabels();
   };
+  // Initial sharps-value text
+  $("#sharps-value").innerText = 1;
   $("#sharps").oninput = $("#sharps").onchange = (e) => {
     $("#sharps-value").innerText = e.target.value;
     recomputeKeyLabels();
@@ -497,6 +480,16 @@ window.addEventListener("DOMContentLoaded", (event) => {
       return;
     }
 
+    // Arrow controls for the octave slider
+    if (e.keyCode == 38 || e.keyCode == 39) {
+      $("#base").stepUp();
+      return;
+    }
+    if (e.keyCode == 37 || e.keyCode == 40) {
+      $("#base").stepDown();
+      return;
+    }
+
     if (e.key === "[" || e.key === "]") {
       const delta = e.key === "[" ? -1 : 1;
       $("#transpose").value = Number($("#transpose").value) + delta;
@@ -593,6 +586,20 @@ window.addEventListener("DOMContentLoaded", (event) => {
   checkbox.addEventListener("click", () => {
     checkbox.blur();
   });
+  checkbox.addEventListener("keydown", () => {
+    checkbox.blur();
+  });
+
+  const slider = $("#base");
+  slider.addEventListener("click", () => {
+    slider.blur();
+  });
+  slider.addEventListener("keydown", () => {
+    slider.blur();
+  });
+
+  const selStrumStyle = $("#select-strum-style");
+  const selInstrument = $("#select-instrument");
 
   $$("input, select").forEach((el) => {
     // Don't remember the settings toggle itself.
