@@ -480,13 +480,13 @@ window.addEventListener("DOMContentLoaded", (event) => {
       return;
     }
 
-    // Arrow controls for the octave slider
-    if (e.keyCode == 38 || e.keyCode == 39) {
-      $("#base").stepUp();
+    // 7 and 8 control the base slider
+    if (e.key == "7") {
+      $("#base").stepDown();
       return;
     }
-    if (e.keyCode == 37 || e.keyCode == 40) {
-      $("#base").stepDown();
+    if (e.key == "8") {
+      $("#base").stepUp();
       return;
     }
 
