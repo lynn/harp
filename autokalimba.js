@@ -5,12 +5,18 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 const ctx = new AudioContext();
 const mix = ctx.createGain();
 const pre = ctx.createGain();
-const cps = ctx.createDynamicsCompressor();
+// Default values except threshold
+const cps = new DynamicsCompressorNode(ctx, {
+  threshold: -33,
+  knee: 30,
+  ratio: 12,
+  attack: 0.003,
+  release: 0.25,
+});
 pre.connect(cps);
 cps.connect(mix);
 mix.connect(ctx.destination);
-// mix.gain.value = 1.0;
-mix.gain.value = 0.7;
+mix.gain.value = 1.0;
 const pointers = new Map();
 let currentBass = 220.0;
 // let frozenBass = 220.0;
@@ -159,10 +165,10 @@ function getTuningSemitones() {
 }
 
 function chordFreq(semitones) {
-  // if (bend) {
-  //   if (semitones === 3 || semitones === 4) semitones = 2;
-  //   if (semitones === 15 || semitones === 16) semitones = 14;
-  // }
+  if (bend) {
+    if (semitones === 3 || semitones === 4) semitones = 2;
+    if (semitones === 15 || semitones === 16) semitones = 14;
+  }
 
   let k = currentBass * 2 ** (semitones / 12);
   if (k < currentInstrument.lo) k *= 2;
@@ -480,7 +486,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
       return;
     }
 
-    // 7 and 8 control the base slider
+    // "7" and "8" step the base slider
     if (e.key == "7") {
       $("#base").stepDown();
       return;
@@ -488,6 +494,22 @@ window.addEventListener("DOMContentLoaded", (event) => {
     if (e.key == "8") {
       $("#base").stepUp();
       return;
+    }
+
+    // "9" cycles through 3 values of the base slider
+    if (e.key == "9") {
+      if ($("#base").value >= -12 && $("#base").value < 0) {
+        $("#base").value = 0;
+        return;
+      }
+      if ($("#base").value >= 0 && $("#base").value < 12) {
+        $("#base").value = 12;
+        return;
+      }
+      if ($("#base").value == 12) {
+        $("#base").value = -12;
+        return;
+      }
     }
 
     if (e.key === "[" || e.key === "]") {
@@ -606,7 +628,9 @@ window.addEventListener("DOMContentLoaded", (event) => {
     if (el.id === "settings") return;
     const key = "autokalimba-" + el.id;
     let value = window.localStorage.getItem(key);
-    if (el.id === "select-instrument") value ??= "Rhodes";
+    // Random initial instrument
+    if (el.id === "select-instrument") value ??=
+      Object.keys(instruments)[Object.keys(instruments).length * Math.random() << 0];
     if (value !== null && value !== undefined) {
       el.value = value;
       if (el.onchange) el.onchange({ target: el });
