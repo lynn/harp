@@ -308,6 +308,14 @@ window.addEventListener("DOMContentLoaded", (event) => {
     $("#sharps-value").innerText = e.target.value;
     recomputeKeyLabels();
   };
+  // Base step
+  let divisorsOf24 = [1, 2, 3, 4, 6, 8, 12, 24];
+  $("#base-step").innerText = 1;
+  $("#base-step").oninput = $("#base-step").onchange = (e) => {
+    $("#base-step-value").innerText = divisorsOf24[e.target.value];
+    $("#base").step = divisorsOf24[e.target.value];
+    $("#base").dispatchEvent(new Event("change"));
+  };
   const bass = $(".bass");
   const bassButtons = [...$$(".bass-button")];
 
@@ -489,27 +497,13 @@ window.addEventListener("DOMContentLoaded", (event) => {
     // "7" and "8" step the base slider
     if (e.key == "7") {
       $("#base").stepDown();
+      $("#base").dispatchEvent(new Event("change"));
       return;
     }
     if (e.key == "8") {
       $("#base").stepUp();
+      $("#base").dispatchEvent(new Event("change"));
       return;
-    }
-
-    // "9" cycles through 3 values of the base slider
-    if (e.key == "9") {
-      if ($("#base").value >= -12 && $("#base").value < 0) {
-        $("#base").value = 0;
-        return;
-      }
-      if ($("#base").value >= 0 && $("#base").value < 12) {
-        $("#base").value = 12;
-        return;
-      }
-      if ($("#base").value == 12) {
-        $("#base").value = -12;
-        return;
-      }
     }
 
     if (e.key === "[" || e.key === "]") {
