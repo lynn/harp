@@ -480,7 +480,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
   let fifthIndex = -1;
   let keysDown = {};
   document.addEventListener("keydown", (e) => {
-    // if (e.repeat) return;
+    if (e.repeat) return;
     if (keysDown[e.key] == true) return;
     keysDown[e.key] = true;
     if (e.key === "Shift") {
@@ -602,20 +602,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
   checkbox.addEventListener("click", () => {
     checkbox.blur();
   });
-  checkbox.addEventListener("keydown", () => {
-    checkbox.blur();
-  });
 
   const slider = $("#base");
   slider.addEventListener("click", () => {
     slider.blur();
   });
-  slider.addEventListener("keydown", () => {
-    slider.blur();
-  });
-
-  const selStrumStyle = $("#select-strum-style");
-  const selInstrument = $("#select-instrument");
 
   $$("input, select").forEach((el) => {
     // Don't remember the settings toggle itself.
