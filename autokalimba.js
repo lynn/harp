@@ -5,10 +5,10 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 const ctx = new AudioContext();
 const mix = ctx.createGain();
 const pre = ctx.createGain();
-// Default values except threshold
+// Default values except threshold and knee
 const cps = new DynamicsCompressorNode(ctx, {
-  threshold: -33,
-  knee: 30,
+  threshold: -20,
+  knee: 20,
   ratio: 12,
   attack: 0.003,
   release: 0.25,
