@@ -280,14 +280,6 @@ window.addEventListener("DOMContentLoaded", (event) => {
     $("#sharps-value").innerText = e.target.value;
     recomputeKeyLabels();
   };
-  // Base step
-  let divisorsOf24 = [1, 2, 3, 4, 6, 8, 12, 24];
-  $("#base-step").innerText = 1;
-  $("#base-step").oninput = $("#base-step").onchange = (e) => {
-    $("#base-step-value").innerText = divisorsOf24[e.target.value];
-    $("#base").step = divisorsOf24[e.target.value];
-    $("#base").dispatchEvent(new Event("change"));
-  };
   const bass = $(".bass");
   const bassButtons = [...$$(".bass-button")];
 
