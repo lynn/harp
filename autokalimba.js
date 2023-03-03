@@ -163,6 +163,10 @@ function noteNameToSemitone(note) {
   );
 }
 
+function signed(n) {
+  return n > 0 ? `+${n}` : n < 0 ? `−${-n}` : `${n}`;
+}
+
 function makeOsc(freq, gainValue, delay, isBass) {
   const osc = ctx.createBufferSource();
   const gain = ctx.createGain();
@@ -201,7 +205,6 @@ function makeOsc(freq, gainValue, delay, isBass) {
 
 function recomputeKeyLabels() {
   const keys = $$(".bass-button");
-  const transpose = Number($("#transpose").value);
   const sharps = Number($("#sharps").value);
   const labels = [
     "A",
@@ -223,7 +226,7 @@ function recomputeKeyLabels() {
     //   "FCGDAEB"[((i % 7) + 7) % 7] +
     //   "#".repeat(Math.max(0, Math.floor(i / 7))) +
     //   "b".repeat(-Math.min(0, Math.floor(i / 7)));
-    e.innerText = labels[(i * 7 + 16 + transpose) % 12];
+    e.innerText = labels[(i * 7 + 16) % 12];
   });
 }
 
@@ -262,16 +265,15 @@ window.addEventListener("DOMContentLoaded", (event) => {
   };
   $("#hue").value = 0;
   $("#hue").oninput = $("#hue").onchange = (e) => {
-    document.body.style.filter = `hue-rotate(${e.target.value}deg)`;
+    document.documentElement.style.filter = `hue-rotate(${e.target.value}deg)`;
   };
   // Initial tuning-value text
   $("#tuning-value").innerText = `+0¢`;
   $("#tuning").oninput = $("#tuning").onchange = (e) => {
-    const n = e.target.value;
-    $("#tuning-value").innerText = `${n > -1 ? "+" : ""}${n}¢`;
+    $("#tuning-value").innerText = signed(e.target.value) + "¢";
   };
   $("#transpose").oninput = $("#transpose").onchange = (e) => {
-    $("#transpose-value").innerText = e.target.value;
+    $("#transpose-value").innerText = signed(e.target.value);
     recomputeKeyLabels();
   };
   // Initial sharps-value text
@@ -295,7 +297,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
       const centerY = rect.top + rect.height / 2;
       const note = e.target.innerText;
 
-      let freq = bassFreq(noteNameToSemitone(note));
+      const transpose = Number($("#transpose").value);
+      let freq = bassFreq(noteNameToSemitone(note) + transpose);
       let isSub = false;
       currentBass = freq;
       lastBassTime = Date.now();
