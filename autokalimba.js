@@ -252,10 +252,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
   $("#strum").onchange = (e) => {
     strumSetting = Number(e.target.value);
   };
-  // Random initial hue
-  let rval = Math.floor(Math.random() * 180) * (Math.random() < 0.5 ? -1 : 1);
-  $("#hue").value = rval;
-  document.body.style.filter = `hue-rotate(${rval}deg)`;
+  $("#hue").value = 0;
   $("#hue").oninput = $("#hue").onchange = (e) => {
     document.body.style.filter = `hue-rotate(${e.target.value}deg)`;
   };
@@ -450,7 +447,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
   let keysDown = {};
   document.addEventListener("keydown", (e) => {
     if (e.repeat) return;
-    if (keysDown[e.key] == true) return;
+    if (keysDown[e.key] === true) return;
     keysDown[e.key] = true;
     if (e.key === "Shift") {
       bend = true;
@@ -464,12 +461,12 @@ window.addEventListener("DOMContentLoaded", (event) => {
     }
 
     // "7" and "8" step the base slider
-    if (e.key == "7") {
+    if (e.key === "7") {
       $("#base").stepDown();
       $("#base").dispatchEvent(new Event("change"));
       return;
     }
-    if (e.key == "8") {
+    if (e.key === "8") {
       $("#base").stepUp();
       $("#base").dispatchEvent(new Event("change"));
       return;
@@ -495,7 +492,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     const i = bassKb.indexOf(e.key.toLowerCase());
     if (i >= 0) {
       bassKbIndex = i;
-      if (fifthIndex == bassKbIndex) {
+      if (fifthIndex === bassKbIndex) {
         stop(999 + fifthIndex);
         fifthIndex = -1;
       }
@@ -541,15 +538,13 @@ window.addEventListener("DOMContentLoaded", (event) => {
     }
 
     if (e.key === " ") {
-      // ugh idk
-      // for (let k = 0; k < 12; k++) stop(999 + k);
       if (fifthIndex >= 0) {
         stop(999 + fifthIndex);
       }
     }
 
     const i = bassKb.indexOf(e.key.toLowerCase());
-    if (i >= 0 && i != fifthIndex) {
+    if (i >= 0 && i !== fifthIndex) {
       stop(999 + i);
     }
     const j = chordKb.indexOf(e.key.toLowerCase());
@@ -582,12 +577,9 @@ window.addEventListener("DOMContentLoaded", (event) => {
     if (el.id === "settings") return;
     const key = "autokalimba-" + el.id;
     let value = window.localStorage.getItem(key);
-    // Random initial instrument
-    if (el.id === "select-instrument")
-      value ??=
-        Object.keys(instruments)[
-          (Object.keys(instruments).length * Math.random()) << 0
-        ];
+    if (el.id === "select-instrument" && !(value in instruments)) {
+      value = "Rhodes";
+    }
     if (value !== null && value !== undefined) {
       el.value = value;
       if (el.onchange) el.onchange({ target: el });
