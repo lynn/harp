@@ -40,7 +40,6 @@ function subSemitones() {
 }
 
 let instruments = {
-  Bass: { lo: 250, hi: 650, samples: [{ name: "bass.wav", freq: 55 * 2 }] },
   Fluffy: {
     lo: 200,
     hi: 550,
@@ -50,12 +49,20 @@ let instruments = {
     lo: 250,
     hi: 650,
     samples: [
-      { name: "fm-bass-c2.wav", freq: 65, bassOnly: true },
-      { name: "fm-epiano-c5.wav", freq: 543, bassOnly: false },
+      { name: "fm-bass-c2.wav", freq: 65, only: "bass" },
+      { name: "fm-epiano-c5.wav", freq: 543, only: "chords" },
     ],
   },
   Guitar: { lo: 250, hi: 650, samples: [{ name: "guitar.wav", freq: 110 }] },
   Honk: { lo: 250, hi: 650, samples: [{ name: "honk.wav", freq: 365 }] },
+  Jazz: {
+    lo: 250,
+    hi: 650,
+    samples: [
+      { name: "bass.wav", freq: 55 * 2, only: "bass" },
+      { name: "piano-f4.wav", freq: 698.46 / 2, only: "chords" },
+    ],
+  },
   Kalimba: { lo: 250, hi: 650, samples: [{ name: "kalimba.wav", freq: 220 }] },
   Marimba: {
     lo: 250,
@@ -72,7 +79,7 @@ let instruments = {
     lo: 250,
     hi: 650,
     samples: [
-      { name: "piano-cs3.wav", freq: 138.59, bassOnly: false },
+      { name: "piano-cs3.wav", freq: 138.59 },
       { name: "piano-f4.wav", freq: 698.46 / 2 },
     ],
   },
@@ -80,8 +87,8 @@ let instruments = {
     lo: 250,
     hi: 650,
     samples: [
-      { name: "rhodes-low.wav", freq: 110, bassOnly: true },
-      { name: "rhodes-high.wav", freq: 329 },
+      { name: "rhodes-low.wav", freq: 110, only: "bass" },
+      { name: "rhodes-high.wav", freq: 329, only: "chords" },
     ],
   },
   Saw: { lo: 250, hi: 650, samples: [{ name: "saw.wav", freq: 110 / 2 }] },
@@ -95,8 +102,8 @@ let instruments = {
     lo: 300,
     hi: 700,
     samples: [
-      { name: "toy-bass.wav", freq: 110, bassOnly: true },
-      { name: "toy-acc.wav", freq: 440 },
+      { name: "toy-bass.wav", freq: 110, only: "bass" },
+      { name: "toy-acc.wav", freq: 440, only: "chords" },
     ],
   },
   Vibraphone: {
@@ -118,7 +125,7 @@ function loadInstrument(instrument) {
         sampleBuffers[i] = {
           buffer,
           freq: s.freq,
-          bassOnly: s.bassOnly ?? false,
+          only: s.only,
         };
       });
     });
@@ -164,7 +171,8 @@ function makeOsc(freq, gainValue, delay, isBass) {
   let closestDifference = 9e99;
   for (const b of sampleBuffers) {
     const difference = Math.abs(freq - b.freq);
-    if (b.bassOnly && !isBass) continue;
+    if (b.only === "bass" && !isBass) continue;
+    if (b.only === "chords" && isBass) continue;
     if (difference < closestDifference) {
       closestBuffer = b;
       closestDifference = difference;
