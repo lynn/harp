@@ -4,6 +4,17 @@ const $$ = (x) => document.querySelectorAll(x);
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 const ctx = new AudioContext();
 const mix = ctx.createGain();
+const pre = ctx.createGain();
+// Default values except threshold
+const cps = new DynamicsCompressorNode(ctx, {
+  threshold: -33,
+  knee: 30,
+  ratio: 12,
+  attack: 0.003,
+  release: 0.25,
+});
+pre.connect(cps);
+cps.connect(mix);
 mix.connect(ctx.destination);
 mix.gain.value = 1.0;
 const pointers = new Map();
@@ -43,8 +54,8 @@ let instruments = {
     lo: 250,
     hi: 650,
     samples: [
-      { name: "rhodes-low.mp3", freq: 110, bassOnly: true },
-      { name: "rhodes-high.mp3", freq: 329 },
+      { name: "rhodes-low.wav", freq: 110, bassOnly: true },
+      { name: "rhodes-high.wav", freq: 329 },
     ],
   },
   Toy: {
@@ -77,8 +88,56 @@ let instruments = {
         { name: "fm-epiano-c5.wav", freq: 543, bassOnly: false },
     ],
   },
-  Honk: { lo: 250, hi: 650, samples: [{ name: "honk.wav", freq: 365 }] },
-  Subtractive: { lo: 250, hi: 650, samples: [{ name: "meow.wav", freq: 261.63 }] },
+  Honk: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "honk.wav", freq: 365 }],
+  },
+  Subtractive: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "meow.wav", freq: 261.63 }],
+  },
+  Marimba: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "marimba.wav", freq: 246.94 }],
+  },
+  Musicbox: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "musicbox.wav", freq: 311.13 }],
+  },
+  Bass: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "bass.wav", freq: 55 * 2 }],
+  },
+  Saw: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "saw.wav", freq: 110 / 2 }],
+  },
+  Wah: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "wah.wav", freq: 440 / 2 }],
+  },
+  Pan: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "pan.wav", freq: 440 / 2 }],
+  },
+  Vibraphone: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "vibraphone.wav", freq: 440 / 2 }],
+  },
+  Sine: {
+    lo: 250,
+    hi: 650,
+    samples: [{ name: "sine.wav", freq: 440 / 2 }],
+  },
 };
 
 function loadInstrument(instrument) {
@@ -106,10 +165,10 @@ function getTuningSemitones() {
 }
 
 function chordFreq(semitones) {
-  // if (bend) {
-  //   if (semitones === 3 || semitones === 4) semitones = 2;
-  //   if (semitones === 15 || semitones === 16) semitones = 14;
-  // }
+  if (bend) {
+    if (semitones === 3 || semitones === 4) semitones = 2;
+    if (semitones === 15 || semitones === 16) semitones = 14;
+  }
 
   let k = currentBass * 2 ** (semitones / 12);
   if (k < currentInstrument.lo) k *= 2;
@@ -157,7 +216,8 @@ function makeOsc(freq, gainValue, delay, isBass) {
   osc.buffer = closestBuffer.buffer;
   osc.connect(gain);
   osc.gainNode = gain;
-  gain.connect(mix);
+  // gain.connect(mix);
+  gain.connect(pre);
   osc.playbackRate.value = freq / closestBuffer.freq;
   osc.autokalimbaSampleBaseFreq = closestBuffer.freq;
   osc.start(ctx.currentTime + delay);
@@ -225,20 +285,36 @@ window.addEventListener("DOMContentLoaded", (event) => {
   $("#strum").onchange = (e) => {
     strumSetting = Number(e.target.value);
   };
+  // Random initial hue
+  let rval = Math.floor(Math.random() * 180) * (Math.random() < 0.5 ? -1 : 1);
+  $("#hue").value = rval;
+  document.body.style.filter = `hue-rotate(${rval}deg)`;
   $("#hue").oninput = $("#hue").onchange = (e) => {
     document.body.style.filter = `hue-rotate(${e.target.value}deg)`;
   };
+  // Initial tuning-value text
+  $("#tuning-value").innerText = `+0¢`
   $("#tuning").oninput = $("#tuning").onchange = (e) => {
     const n = e.target.value;
-    $("#tuning-value").innerText = `${n > 0 ? "+" : ""}${n}¢`;
+    $("#tuning-value").innerText = `${n > -1 ? "+" : ""}${n}¢`;
   };
   $("#transpose").oninput = $("#transpose").onchange = (e) => {
     $("#transpose-value").innerText = e.target.value;
     recomputeKeyLabels();
   };
+  // Initial sharps-value text
+  $("#sharps-value").innerText = 1;
   $("#sharps").oninput = $("#sharps").onchange = (e) => {
     $("#sharps-value").innerText = e.target.value;
     recomputeKeyLabels();
+  };
+  // Base step
+  let divisorsOf24 = [1, 2, 3, 4, 6, 8, 12, 24];
+  $("#base-step").innerText = 1;
+  $("#base-step").oninput = $("#base-step").onchange = (e) => {
+    $("#base-step-value").innerText = divisorsOf24[e.target.value];
+    $("#base").step = divisorsOf24[e.target.value];
+    $("#base").dispatchEvent(new Event("change"));
   };
   const bass = $(".bass");
   const bassButtons = [...$$(".bass-button")];
@@ -302,7 +378,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
     const p = pointers.get(pointerId);
     if (!p) return;
     for (const osc of p.oscs) {
-      osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.01);
+      // osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.01);
+      osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime + 0.05, 0.01);
       osc.stop(ctx.currentTime + 0.2);
     }
     p.target.style.background = "";
@@ -400,14 +477,34 @@ window.addEventListener("DOMContentLoaded", (event) => {
   const bassKb = "2wsx3edc4rfv";
   const chordKb = "yuiophjkl;nm,./";
   let bassKbIndex = 0;
+  let fifthIndex = -1;
+  let keysDown = {};
   document.addEventListener("keydown", (e) => {
     if (e.repeat) return;
+    if (keysDown[e.key] == true) return;
+    keysDown[e.key] = true;
     if (e.key === "Shift") {
       bend = true;
       recalc();
       return;
     }
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      e.preventDefault();
+      return;
+    }
+
+    // "7" and "8" step the base slider
+    if (e.key == "7") {
+      $("#base").stepDown();
+      $("#base").dispatchEvent(new Event("change"));
+      return;
+    }
+    if (e.key == "8") {
+      $("#base").stepUp();
+      $("#base").dispatchEvent(new Event("change"));
+      return;
+    }
 
     if (e.key === "[" || e.key === "]") {
       const delta = e.key === "[" ? -1 : 1;
@@ -429,6 +526,10 @@ window.addEventListener("DOMContentLoaded", (event) => {
     const i = bassKb.indexOf(e.key.toLowerCase());
     if (i >= 0) {
       bassKbIndex = i;
+      if (fifthIndex == bassKbIndex) {
+        stop(999 + fifthIndex)
+        fifthIndex = -1;
+      }
       const target = bassButtons[bassKbIndex];
       target.dispatchEvent(
         new PointerEvent("pointerdown", {
@@ -441,6 +542,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     if (e.key === " ") {
       stop(999 + bassKbIndex);
       forceFifthInBass = true;
+      fifthIndex = bassKbIndex;
       bassButtons[bassKbIndex].dispatchEvent(
         new PointerEvent("pointerdown", {
           pointerId: 999 + bassKbIndex,
@@ -462,6 +564,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     }
   });
   document.addEventListener("keyup", (e) => {
+    keysDown[e.key] = false;
     if (e.key === "Shift") {
       bend = false;
       recalc();
@@ -470,11 +573,14 @@ window.addEventListener("DOMContentLoaded", (event) => {
 
     if (e.key === " ") {
       // ugh idk
-      for (let k = 0; k < 12; k++) stop(999 + k);
+      // for (let k = 0; k < 12; k++) stop(999 + k);
+      if (fifthIndex >= 0) {
+        stop(999 + fifthIndex);
+      }
     }
 
     const i = bassKb.indexOf(e.key.toLowerCase());
-    if (i >= 0) {
+    if (i >= 0 && i != fifthIndex) {
       stop(999 + i);
     }
     const j = chordKb.indexOf(e.key.toLowerCase());
@@ -482,13 +588,34 @@ window.addEventListener("DOMContentLoaded", (event) => {
       stop(1999 + j);
     }
   });
+  // Stop all keys when window loses focus
+  window.addEventListener("blur", () => {
+    keysDown = {};
+    for (let k = 0; k < 12; k++) stop(999 + k);
+    for (let k = 0; k < 15; k++) stop(1999 + k);
+  });
+  document.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+  });
+
+  const checkbox = $("#settings");
+  checkbox.addEventListener("click", () => {
+    checkbox.blur();
+  });
+
+  const slider = $("#base");
+  slider.addEventListener("click", () => {
+    slider.blur();
+  });
 
   $$("input, select").forEach((el) => {
     // Don't remember the settings toggle itself.
     if (el.id === "settings") return;
     const key = "autokalimba-" + el.id;
     let value = window.localStorage.getItem(key);
-    if (el.id === "select-instrument") value ??= "Rhodes";
+    // Random initial instrument
+    if (el.id === "select-instrument") value ??=
+      Object.keys(instruments)[Object.keys(instruments).length * Math.random() << 0];
     if (value !== null && value !== undefined) {
       el.value = value;
       if (el.onchange) el.onchange({ target: el });
