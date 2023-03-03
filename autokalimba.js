@@ -40,41 +40,7 @@ function subSemitones() {
 }
 
 let instruments = {
-  Guitar: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "guitar.wav", freq: 110 }],
-  },
-  Kalimba: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "kalimba.wav", freq: 220 }],
-  },
-  Rhodes: {
-    lo: 250,
-    hi: 650,
-    samples: [
-      { name: "rhodes-low.wav", freq: 110, bassOnly: true },
-      { name: "rhodes-high.wav", freq: 329 },
-    ],
-  },
-  Toy: {
-    lo: 300,
-    hi: 700,
-    samples: [
-      { name: "toy-bass.wav", freq: 110, bassOnly: true },
-      { name: "toy-acc.wav", freq: 440 },
-    ],
-  },
-  Piano: {
-    lo: 250,
-    hi: 650,
-    samples: [
-      // { name: "piano-cs2.wav", freq: 69.30, bassOnly: true },
-      { name: "piano-cs3.wav", freq: 138.59, bassOnly: false },
-      { name: "piano-f4.wav", freq: 698.46 / 2 },
-    ],
-  },
+  Bass: { lo: 250, hi: 650, samples: [{ name: "bass.wav", freq: 55 * 2 }] },
   Fluffy: {
     lo: 200,
     hi: 550,
@@ -84,20 +50,13 @@ let instruments = {
     lo: 250,
     hi: 650,
     samples: [
-        { name: "fm-bass-c2.wav", freq: 65, bassOnly: true },
-        { name: "fm-epiano-c5.wav", freq: 543, bassOnly: false },
+      { name: "fm-bass-c2.wav", freq: 65, bassOnly: true },
+      { name: "fm-epiano-c5.wav", freq: 543, bassOnly: false },
     ],
   },
-  Honk: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "honk.wav", freq: 365 }],
-  },
-  Subtractive: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "meow.wav", freq: 261.63 }],
-  },
+  Guitar: { lo: 250, hi: 650, samples: [{ name: "guitar.wav", freq: 110 }] },
+  Honk: { lo: 250, hi: 650, samples: [{ name: "honk.wav", freq: 365 }] },
+  Kalimba: { lo: 250, hi: 650, samples: [{ name: "kalimba.wav", freq: 220 }] },
   Marimba: {
     lo: 250,
     hi: 650,
@@ -108,36 +67,44 @@ let instruments = {
     hi: 650,
     samples: [{ name: "musicbox.wav", freq: 311.13 }],
   },
-  Bass: {
+  Pan: { lo: 250, hi: 650, samples: [{ name: "pan.wav", freq: 440 / 2 }] },
+  Piano: {
     lo: 250,
     hi: 650,
-    samples: [{ name: "bass.wav", freq: 55 * 2 }],
+    samples: [
+      { name: "piano-cs3.wav", freq: 138.59, bassOnly: false },
+      { name: "piano-f4.wav", freq: 698.46 / 2 },
+    ],
   },
-  Saw: {
+  Rhodes: {
     lo: 250,
     hi: 650,
-    samples: [{ name: "saw.wav", freq: 110 / 2 }],
+    samples: [
+      { name: "rhodes-low.wav", freq: 110, bassOnly: true },
+      { name: "rhodes-high.wav", freq: 329 },
+    ],
   },
-  Wah: {
+  Saw: { lo: 250, hi: 650, samples: [{ name: "saw.wav", freq: 110 / 2 }] },
+  Sine: { lo: 250, hi: 650, samples: [{ name: "sine.wav", freq: 440 / 2 }] },
+  Subtractive: {
     lo: 250,
     hi: 650,
-    samples: [{ name: "wah.wav", freq: 440 / 2 }],
+    samples: [{ name: "meow.wav", freq: 261.63 }],
   },
-  Pan: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "pan.wav", freq: 440 / 2 }],
+  Toy: {
+    lo: 300,
+    hi: 700,
+    samples: [
+      { name: "toy-bass.wav", freq: 110, bassOnly: true },
+      { name: "toy-acc.wav", freq: 440 },
+    ],
   },
   Vibraphone: {
     lo: 250,
     hi: 650,
     samples: [{ name: "vibraphone.wav", freq: 440 / 2 }],
   },
-  Sine: {
-    lo: 250,
-    hi: 650,
-    samples: [{ name: "sine.wav", freq: 440 / 2 }],
-  },
+  Wah: { lo: 250, hi: 650, samples: [{ name: "wah.wav", freq: 440 / 2 }] },
 };
 
 function loadInstrument(instrument) {
@@ -293,7 +260,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     document.body.style.filter = `hue-rotate(${e.target.value}deg)`;
   };
   // Initial tuning-value text
-  $("#tuning-value").innerText = `+0¢`
+  $("#tuning-value").innerText = `+0¢`;
   $("#tuning").oninput = $("#tuning").onchange = (e) => {
     const n = e.target.value;
     $("#tuning-value").innerText = `${n > -1 ? "+" : ""}${n}¢`;
@@ -340,7 +307,9 @@ window.addEventListener("DOMContentLoaded", (event) => {
         isSub = forceFifthInBass || e.clientY > rect.top + rect.height * 0.65;
         e.target.style.background = isSub
           ? "linear-gradient(to bottom, var(--button) 65%, var(--active) 65%)"
-          : $("#split-keys").checked ? "linear-gradient(to bottom, var(--active) 65%, var(--button-split) 65%)" : "var(--button)";
+          : $("#split-keys").checked
+          ? "linear-gradient(to bottom, var(--active) 65%, var(--button-split) 65%)"
+          : "var(--button)";
         if (isSub) {
           freq = bassFreq(noteNameToSemitone(note) - subSemitones());
         }
@@ -527,7 +496,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     if (i >= 0) {
       bassKbIndex = i;
       if (fifthIndex == bassKbIndex) {
-        stop(999 + fifthIndex)
+        stop(999 + fifthIndex);
         fifthIndex = -1;
       }
       const target = bassButtons[bassKbIndex];
@@ -614,8 +583,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
     const key = "autokalimba-" + el.id;
     let value = window.localStorage.getItem(key);
     // Random initial instrument
-    if (el.id === "select-instrument") value ??=
-      Object.keys(instruments)[Object.keys(instruments).length * Math.random() << 0];
+    if (el.id === "select-instrument")
+      value ??=
+        Object.keys(instruments)[
+          (Object.keys(instruments).length * Math.random()) << 0
+        ];
     if (value !== null && value !== undefined) {
       el.value = value;
       if (el.onchange) el.onchange({ target: el });
