@@ -25,8 +25,8 @@ Or listen here: ✨ https://twitter.com/search?q=%23autokalimba&f=video ✨
 * **Piano**: [Samulis on freesound](https://freesound.org/people/Samulis/packs/21055/?page=2#sound).
 * **Fluffy**: From the Animal Crossing soundfont.
 * **FM**: From a certain popular FM synthesizer.
-* **Honk**: 
-* **Subtractive**: 
+* **Honk**: From [season 3, episode 1 of _Breaking Bad_](https://youtu.be/mtaN00gvie8?t=60).
+* **Subtractive**: Made with the freeware VST [Charlatan](https://www.blaukraut.info/).
 * **Marimba**: [Samulis on freesound](https://freesound.org/people/Samulis/sounds/373577/).
 * **Musicbox**: [UbikPhonik on freesound](https://freesound.org/people/UbikPhonik/sounds/177954/).
 * **Bass**: From the FluidR3_GM soundfont.
