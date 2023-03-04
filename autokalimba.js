@@ -298,7 +298,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
       const note = e.target.innerText;
 
       const transpose = Number($("#transpose").value);
-      let freq = bassFreq(noteNameToSemitone(note) + transpose);
+      const semitones = noteNameToSemitone(note) + transpose;
+      let freq = bassFreq(semitones);
       let isSub = false;
       currentBass = freq;
       lastBassTime = Date.now();
@@ -311,7 +312,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
           ? "linear-gradient(to bottom, var(--active) 65%, var(--button-split) 65%)"
           : "var(--button)";
         if (isSub) {
-          freq = bassFreq(noteNameToSemitone(note) - subSemitones());
+          freq = bassFreq(semitones - subSemitones());
         }
       } else {
         e.target.style.background = "#f80";
