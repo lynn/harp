@@ -265,7 +265,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
   };
   $("#hue").value = 0;
   $("#hue").oninput = $("#hue").onchange = (e) => {
-    document.documentElement.style.filter = `hue-rotate(${e.target.value}deg)`;
+    document.body.style.filter = `hue-rotate(${e.target.value}deg)`;
   };
   // Initial tuning-value text
   $("#tuning-value").innerText = `+0¢`;
