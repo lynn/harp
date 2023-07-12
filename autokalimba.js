@@ -444,8 +444,44 @@ window.addEventListener("DOMContentLoaded", (event) => {
   }
 
   // const bassKb = "1qaz2wsx3edc";
-  const bassKb = "2wsx3edc4rfv";
-  const chordKb = "yuiophjkl;nm,./";
+  const bassKb = localStorage.getItem("bassKb") ?? "2wsx3edc4rfv";
+  const chordKb = localStorage.getItem("chordKb") ?? "yuiophjkl;nm,./";
+
+  // Add the notes to the change keys
+  const bassNotes = ["Db", "F", "A", "Ab", "C", "E", "Eb", "G", "B", "Bb", "D", "F#"];
+  const chords = ["Δ9", "Δ", "6", "m9", "m7", "m6", "7s", "7", "ø", "7b9", "7#5", "o", "13s", "13", "II/"];
+
+  const sections = $$("#change-keys-outer section .content-keys");
+
+  const allButtons = [bassNotes, chords];
+
+
+  allButtons.forEach((content, isChord) => {
+    content.forEach((e,i) => {
+      sections[isChord].innerHTML += `
+        <button
+          class="button"
+          onmouseover="this.innerHTML = '${(isChord ? chordKb : bassKb)[i]}'"
+          onmouseout="this.innerHTML = '${e}'"
+          onclick="getNextKeyPress(${isChord}, ${i}, '${chordKb}', '${bassKb}')"
+        >
+          ${e}
+        </button>`;
+    });
+  });
+
+
+
+
+
+
+  // Section that keeps track of opening or closing the settings of keys 
+  const changeKeys = $("#change-keys")
+  changeKeys.addEventListener("change", (e) => {
+    $("#change-keys-outer").style.display = e.target.checked ? "block" : "none";
+  });
+
+
   let bassKbIndex = 0;
   let fifthIndex = -1;
   let keysDown = {};
@@ -463,6 +499,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
       e.preventDefault();
       return;
     }
+    
+
 
     // "7" and "8" step the base slider
     if (e.key === "7") {
@@ -593,3 +631,40 @@ window.addEventListener("DOMContentLoaded", (event) => {
     });
   });
 });
+
+
+
+/*
+ * Function to get the next key pressed after a click
+ *
+ * isChord: If it's a chord or a bass
+ * keyToChange: The key to change
+ * chordKb: The keys for the chords
+ * bassKb: The keys for the bass
+ */
+const getNextKeyPress = (isChord, keyToChange, chordKb, bassKb) => {
+
+  const listenerKeyPress = (e) => {
+    if (keyToChange === 'Escape') return;
+
+    // Update the localStorage
+    let tempKeys = isChord ? chordKb : bassKb;
+    tempKeys = tempKeys.split``;
+    tempKeys[keyToChange] = e.key;
+    tempKeys = tempKeys.join``;
+    localStorage.setItem(isChord ? 'chordKb' :  'bassKb', tempKeys);
+    
+    // Update the HTML
+    const sections = $$("#change-keys-outer section .content-keys");
+    const elementToChange = sections[isChord].getElementsByClassName("button")[keyToChange];
+    elementToChange.onmouseover = () => elementToChange.innerHTML = e.key;
+    elementToChange.innerHTML = e.key;
+
+
+
+    window.removeEventListener('keypress', listenerKeyPress);
+  }
+  
+  window.addEventListener('keypress', listenerKeyPress);
+}
+
