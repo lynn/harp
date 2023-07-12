@@ -251,6 +251,7 @@ const getNextKeyPress = (isChord, keyToChange, chordKb, bassKb, setBassKb, setCh
     tempKeys = tempKeys.join``;
     localStorage.setItem(isChord ? 'chordKb' :  'bassKb', tempKeys);
 
+    // Change the global value
     if (isChord) {
       setChordKb(tempKeys);
     } else {
@@ -264,8 +265,7 @@ const getNextKeyPress = (isChord, keyToChange, chordKb, bassKb, setBassKb, setCh
     elementToChange.onmouseover = () => elementToChange.innerHTML = e.key;
     elementToChange.innerHTML = e.key;
 
-
-
+    // Remove event listener
     window.removeEventListener('keypress', listenerKeyPress);
   }
   
