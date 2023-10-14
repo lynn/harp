@@ -263,6 +263,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
   $("#strum").onchange = (e) => {
     strumSetting = Number(e.target.value);
   };
+  $("#select-special-chord").onchange = (e) => {
+    const [label, data] = e.target.value.split(",");
+    $("#special-chord-button").innerText = label;
+    $("#special-chord-button").dataset.chord = data;
+  };
   $("#hue").value = 0;
   $("#hue").oninput = $("#hue").onchange = (e) => {
     document.body.style.filter = `hue-rotate(${e.target.value}deg)`;
@@ -363,9 +368,9 @@ window.addEventListener("DOMContentLoaded", (event) => {
 
   const chordButtons = [...$$(".chord-button")];
   for (const b of chordButtons) {
-    const attr = b.attributes["data-chord"].value;
-    const voicing = attr.split(" ").map(Number);
     b.addEventListener("pointerdown", (e) => {
+      const attr = b.dataset.chord;
+      const voicing = attr.split(" ").map(Number);
       e.target.style.background = "#f80";
       const rect = e.target.getBoundingClientRect();
 

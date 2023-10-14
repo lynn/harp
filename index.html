@@ -67,6 +67,15 @@
       <!-- populated by javascript -->
     </select>
     <br>
+    <label for="special-chord">Special chord:</label>
+    <select name="special-chord" id="select-special-chord">
+      <option value="II/,9 14 12 18" selected>II/</option>
+      <option value="lyd,11 14 16 18">maj7#11</option>
+      <option value="mΔ,7 11 12 15">mmaj7</option>
+      <option value="7b5,6 10 12 16">7b5</option>
+      <option value="2,7 12 14 16">add2</option>
+    </select>
+    <br>
     <label for="hue">Hue</label>
     <input type="range" id="hue" min="-180" max="180" value="0" step="1">
     <br>
@@ -120,7 +129,7 @@
           <div class="button chord-button" data-chord="7 9 12 15">m6</div>
           <div class="button chord-button" data-chord="6 10 12 15">ø</div>
           <div class="button chord-button" data-chord="6 9 12 15">o</div>
-          <div class="button chord-button" data-chord="9 14 12 18">II/</div>
+          <div id="special-chord-button" class="button chord-button" data-chord="9 14 12 18">II/</div>
         </div>
       </div>
     </div>
