@@ -12,7 +12,7 @@ Or listen here: ✨ https://twitter.com/search?q=%23autokalimba&f=video ✨
 * Wiggle your thumb up and down on the chord key to add **vibrato**.
 * Press **Settings** in the top-left to tweak instrument and strum behavior.
 * With **split keys** enabled, press the bottom part on a bass key to play a 5 in the bass.
-* There are some hacky QWERTY controls (enable _Horizontal chords_ under settings and hit some keys to find the layout).
+* There are some hacky QWERTY controls (enable _Horizontal chords_ under settings and hit some keys to find the layout) by default. But you can modify them as you wish!
 
 ## Un-features
 * Triads
