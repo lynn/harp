@@ -455,7 +455,13 @@ window.addEventListener("DOMContentLoaded", (event) => {
   let fifthIndex = -1;
   let keysDown = {};
   document.addEventListener("keydown", (e) => {
-    if (e.repeat) return;
+    // Disable all browser shortcuts. Motivating example: '/' in Firefox
+    // triggers quick-find, as do its repeats, and so does "'", which isn't
+    // even used by autokalimba but is easy to accidentally stumble onto.
+    e.preventDefault();
+    if (e.repeat) {
+      return;
+    }
     if (keysDown[e.key] === true) return;
     keysDown[e.key] = true;
     if (e.key === "Shift") {
@@ -465,7 +471,6 @@ window.addEventListener("DOMContentLoaded", (event) => {
     }
     // if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.ctrlKey || e.metaKey || e.altKey) {
-      e.preventDefault();
       return;
     }
 
