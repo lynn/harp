@@ -597,10 +597,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
     }
     if (value !== null && value !== undefined) {
       el.value = value;
+      el.checked = value === "true";
       if (el.onchange) el.onchange({ target: el });
     }
     el.addEventListener("change", (e) => {
-      window.localStorage.setItem(key, String(e.target.value));
+      window.localStorage.setItem(key, String(e.target.checked ?? e.target.value));
     });
   });
 });
