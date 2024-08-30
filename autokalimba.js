@@ -287,6 +287,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
     $("#sharps-value").innerText = e.target.value;
     recomputeKeyLabels();
   };
+  $("#emoji-labels").onchange = (e) => {
+    for (const b of [...$$(".chord-button")]) {
+      b.innerText = e.target.checked ? b.dataset.emoji : b.dataset.name;
+    }
+  };
   const bass = $(".bass");
   const bassButtons = [...$$(".bass-button")];
 

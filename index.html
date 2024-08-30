@@ -29,6 +29,8 @@
     <br>
     <input type="checkbox" checked id="split-keys"></input>
     <label for="split-keys">Split keys</label>
+    <input type="checkbox" id="emoji-labels"></input>
+    <label for="emoji-labels">Emoji labels</label>
     <br>
     <input type="checkbox" id="horizontal-chords"></input>
     <label for="horizontal-chords">Horizontal chords</label>
@@ -109,28 +111,25 @@
       </div>
       <div class="chords">
         <div class="chord-column">
-          <div class="button chord-button" data-chord="7 11 14 16">Δ9</div>
-          <div class="button chord-button" data-chord="7 10 14 15">m9</div>
-          <div class="button chord-button" data-chord="7 10 12 17">7s</div>
-          <div class="button chord-button" data-chord="7 10 13 16">7b9</div>
-          <div class="button chord-button" data-chord="10 14 17 21">13s</div>
+          <div class="button chord-button" data-chord="7 11 14 16" data-name="Δ9" data-emoji="🌄">Δ9</div>
+          <div class="button chord-button" data-chord="7 10 14 15" data-name="m9" data-emoji="🌠">m9</div>
+          <div class="button chord-button" data-chord="7 10 12 17" data-name="7s" data-emoji="🛫">7s</div>
+          <div class="button chord-button" data-chord="7 10 13 16" data-name="7b9" data-emoji="🔥">7b9</div>
+          <div class="button chord-button" data-chord="10 14 17 21" data-name="13s" data-emoji="🍃">13s</div>
         </div>
         <div class="chord-column">
-          <div class="button chord-button" data-chord="7 11 12 16">Δ</div>
-          <!-- <div class="button chord-button" data-chord="7 11 12 15">mΔ</div> -->
-          <div class="button chord-button" data-chord="7 10 12 15">m7</div>
-          <div class="button chord-button" data-chord="7 10 12 16">7</div>
-          <div class="button chord-button" data-chord="8 10 12 16">7#5</div>
-          <div class="button chord-button" data-chord="10 14 16 21">13</div>
+          <div class="button chord-button" data-chord="7 11 12 16" data-name="Δ" data-emoji="🌞">Δ</div>
+          <div class="button chord-button" data-chord="7 10 12 15" data-name="m7" data-emoji="🌙">m7</div>
+          <div class="button chord-button" data-chord="7 10 12 16" data-name="7" data-emoji="🚘">7</div>
+          <div class="button chord-button" data-chord="8 10 12 16" data-name="7#5" data-emoji="🍳">7#5</div>
+          <div class="button chord-button" data-chord="10 14 16 21" data-name="13" data-emoji="🥝">13</div>
         </div>
         <div class="chord-column">
-          <div class="button chord-button" data-chord="7 9 12 16">6</div>
-          <!-- <div class="button chord-button" data-chord="7 12 16">maj</div> -->
-          <!-- <div class="button chord-button" data-chord="up">&uarr;</div> -->
-          <div class="button chord-button" data-chord="7 9 12 15">m6</div>
-          <div class="button chord-button" data-chord="6 10 12 15">ø</div>
-          <div class="button chord-button" data-chord="6 9 12 15">o</div>
-          <div id="special-chord-button" class="button chord-button" data-chord="9 14 12 18">II/</div>
+          <div class="button chord-button" data-chord="7 9 12 16" data-name="6" data-emoji="☁️&#xFE0F;">6</div>
+          <div class="button chord-button" data-chord="7 9 12 15" data-name="m6" data-emoji="🌧️">m6</div>
+          <div class="button chord-button" data-chord="6 10 12 15" data-name="ø" data-emoji="🗡️">ø</div>
+          <div class="button chord-button" data-chord="6 9 12 15" data-name="o" data-emoji="🔪">o</div>
+          <div id="special-chord-button" class="button chord-button" data-chord="9 14 12 18" data-name="II/" data-emoji="🌈">II/</div>
         </div>
       </div>
     </div>
