@@ -263,11 +263,14 @@ window.addEventListener("DOMContentLoaded", (event) => {
   $("#strum").onchange = (e) => {
     strumSetting = Number(e.target.value);
   };
-  $("#select-special-chord").onchange = (e) => {
-    const [label, data] = e.target.value.split(",");
-    $("#special-chord-button").innerText = label;
-    $("#special-chord-button").dataset.chord = data;
-  };
+  function setSpecialLabel() {
+    if ($("#select-special-chord").value) {
+      const [label, data, emoji] = $("#select-special-chord").value.split(",");
+      $("#special-chord-button").innerText = $("#emoji-labels").checked ? emoji : label;
+      $("#special-chord-button").dataset.chord = data;
+    }
+  }
+  $("#select-special-chord").onchange = setSpecialLabel;
   $("#hue").value = 0;
   $("#hue").oninput = $("#hue").onchange = (e) => {
     document.body.style.filter = `hue-rotate(${e.target.value}deg)`;
@@ -291,6 +294,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
     for (const b of [...$$(".chord-button")]) {
       b.innerText = e.target.checked ? b.dataset.emoji : b.dataset.name;
     }
+    setSpecialLabel();
   };
   const bass = $(".bass");
   const bassButtons = [...$$(".bass-button")];
@@ -319,8 +323,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
         e.target.style.background = isSub
           ? "linear-gradient(to bottom, var(--button) 65%, var(--active) 65%)"
           : $("#split-keys").checked
-          ? "linear-gradient(to bottom, var(--active) 65%, var(--button-split) 65%)"
-          : "var(--button)";
+            ? "linear-gradient(to bottom, var(--active) 65%, var(--button-split) 65%)"
+            : "var(--button)";
         if (isSub) {
           freq = bassFreq(semitones - subSemitones());
         }
@@ -405,12 +409,12 @@ window.addEventListener("DOMContentLoaded", (event) => {
             style === "timed"
               ? ((Date.now() - lastBassTime) / 1e3) * [0, 1, 2, 1][i]
               : style === "random"
-              ? strumSetting * Math.random()
-              : style === "up"
-              ? ((strumSetting * i) / n) * tinyRandom
-              : style === "down"
-              ? ((strumSetting * (n - 1 - i)) / n) * tinyRandom
-              : 0;
+                ? strumSetting * Math.random()
+                : style === "up"
+                  ? ((strumSetting * i) / n) * tinyRandom
+                  : style === "down"
+                    ? ((strumSetting * (n - 1 - i)) / n) * tinyRandom
+                    : 0;
           return makeOsc(freq, 0.2 * chordGain, delay, false);
         }),
       });
@@ -596,12 +600,15 @@ window.addEventListener("DOMContentLoaded", (event) => {
       value = "Rhodes";
     }
     if (value !== null && value !== undefined) {
-      el.value = value;
-      el.checked = value === "true";
+      if (el.type === 'checkbox') {
+        el.checked = value === 'true';
+      } else {
+        el.value = value;
+      }
       if (el.onchange) el.onchange({ target: el });
     }
     el.addEventListener("change", (e) => {
-      window.localStorage.setItem(key, String(e.target.checked ?? e.target.value));
+      window.localStorage.setItem(key, String(e.target.type === 'checkbox' ? e.target.checked : e.target.value));
     });
   });
 });
