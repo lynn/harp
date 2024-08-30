@@ -411,11 +411,12 @@ window.addEventListener("DOMContentLoaded", (event) => {
       });
 
       // Correct bass sub to this new chord voicing
+      const transpose = Number($("#transpose").value);
       for (const v of pointers.values()) {
         if (v.isBass && v.isSub) {
           for (let i = 0; i < v.oscs.length; i++) {
             v.oscs[i].playbackRate.value =
-              bassFreq(v.rootSemitone - subSemitones()) /
+              bassFreq(v.rootSemitone + transpose - subSemitones()) /
               v.oscs[i].autokalimbaSampleBaseFreq;
           }
         }
