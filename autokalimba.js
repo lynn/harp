@@ -18,7 +18,9 @@ cps.connect(mix);
 mix.connect(ctx.destination);
 mix.gain.value = 1.0;
 const pointers = new Map();
+const A440MIDINote = 69;
 let currentBass = 220.0;
+let currentBassMIDINote = A440MIDINote - 12;
 // let frozenBass = 220.0;
 let sampleBuffers = [];
 let strumSetting = 0.04;
@@ -31,6 +33,8 @@ let lastFreqs = undefined;
 let lastVoicing = undefined;
 let lastBassTime = Date.now();
 let forceFifthInBass = false;
+
+let midiOpenDevice = null;
 
 function subSemitones() {
   // If the last voicing contains b5 or #5, drop a tritone; otherwise, drop a fourth.
@@ -150,11 +154,37 @@ function chordFreq(semitones) {
   return k;
 }
 
+function chordMIDINote(semitones) {
+  if (bend) {
+    if (semitones === 3 || semitones === 4) semitones = 2;
+    if (semitones === 15 || semitones === 16) semitones = 14;
+  }
+
+  const chordOctave = +$("#midi-chord-octave").value;
+  const bassOctave = +$("#midi-bass-octave").value;
+
+  let k = currentBassMIDINote + (chordOctave - bassOctave) * 12 + semitones;
+
+  const chordRangeStart = +$("#midi-chord-range-start").value;
+  const chordRangeSize = +$("#midi-chord-range-size").value;
+
+  if (k < A440MIDINote + (chordOctave - 4) * 12 + chordRangeStart) k += 12;
+  if (k > A440MIDINote + (chordOctave - 4) * 12 + chordRangeStart + chordRangeSize) k -= 12;
+  return k;
+}
+
 function bassFreq(semitones) {
   const st = semitones + getTuningSemitones();
   const base = Number($("#base").value);
   const wrapped = ((st + 1200 - base) % 12) + base;
   return 110 * 2 ** (wrapped / 12);
+}
+
+function bassMIDINote(semitones) {
+  const st = semitones;
+  const base = Number($("#base").value);
+  const wrapped = ((st + 1200 - base) % 12) + base;
+  return A440MIDINote + ($("#midi-bass-octave").value - 4) * 12 + wrapped;
 }
 
 function noteNameToSemitone(note) {
@@ -228,6 +258,11 @@ function recomputeKeyLabels() {
     //   "b".repeat(-Math.min(0, Math.floor(i / 7)));
     e.innerText = labels[(i * 7 + 16) % 12];
   });
+}
+
+function midiPlayNote(channel, note, velocity) {
+  // Mask potentially out-of-range values just in case.
+  midiOpenDevice.send([0x90 | (channel & 0xF), note & 0x7F, velocity & 0x7F]);
 }
 
 window.addEventListener("DOMContentLoaded", (event) => {
@@ -332,6 +367,15 @@ window.addEventListener("DOMContentLoaded", (event) => {
         e.target.style.background = "#f80";
       }
 
+      const midiNotes = [];
+      if (midiOpenDevice !== null) {
+        currentBassMIDINote = bassMIDINote(semitones);
+        const channel = +$("#midi-bass-channel").value;
+        const time = performance.now();
+        midiPlayNote(channel, currentBassMIDINote, 100);
+        midiNotes.push([channel, currentBassMIDINote]);
+      }
+
       pointers.set(e.pointerId, {
         centerX: centerX,
         centerY: centerY,
@@ -341,6 +385,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         rootSemitone: noteNameToSemitone(note),
         isSub,
         oscs: [makeOsc(freq, 0.5 * bassGain, 0, true)],
+        midiNotes,
       });
 
       // Correct chord voicing to this new bass note
@@ -366,6 +411,15 @@ window.addEventListener("DOMContentLoaded", (event) => {
       osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime + 0.05, 0.01);
       osc.stop(ctx.currentTime + 0.2);
     }
+
+    const midiNotes = [];
+    if (midiOpenDevice !== null) {
+      const time = performance.now();
+      for (let [channel, note] of p.midiNotes) {
+        midiPlayNote(channel, note, 0 /* Note Off */);
+      }
+    }
+
     p.target.style.background = "";
     pointers.delete(pointerId);
   }
@@ -394,6 +448,16 @@ window.addEventListener("DOMContentLoaded", (event) => {
         lastFreqs = freqs;
       }
 
+      const midiNotes = [];
+      if (midiOpenDevice !== null) {
+        const channel = +$("#midi-chord-channel").value;
+        for (let voice of voicing) {
+          const midiNote = chordMIDINote(voice);
+          midiPlayNote(channel, midiNote, 100);
+          midiNotes.push([channel, midiNote]);
+        }
+      }
+
       pointers.set(e.pointerId, {
         centerX: rect.left + rect.width / 2,
         centerY: rect.top + rect.height / 2,
@@ -417,6 +481,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
                     : 0;
           return makeOsc(freq, 0.2 * chordGain, delay, false);
         }),
+        midiNotes,
       });
 
       // Correct bass sub to this new chord voicing
@@ -610,5 +675,118 @@ window.addEventListener("DOMContentLoaded", (event) => {
     el.addEventListener("change", (e) => {
       window.localStorage.setItem(key, String(e.target.type === 'checkbox' ? e.target.checked : e.target.value));
     });
+  });
+
+  // Web MIDI setup.
+  // This part of the MIDI code was originally written for
+  // https://github.com/hikari-no-yume/SoundPalette, so if there's a problem
+  // with it, please file a bug there too.
+  const midiEnableButton = $("#midi-enable");
+  midiEnableButton.disabled = true;
+  const midiDevicesDropdown = $("#midi-devices");
+  midiDevicesDropdown.disabled = true;
+  const midiDevices = [];
+  const midiDeviceConnectButton = $("#midi-device-connect");
+  midiDeviceConnectButton.disabled = true;
+  const midiOptionsZone = $("#midi-options");
+  midiOptionsZone.disabled = true;
+  if (!navigator.requestMIDIAccess) {
+    $("#midi-setup").innerText = "Your browser does not support Web MIDI.";
+  } else {
+    midiEnableButton.disabled = false;
+    midiEnableButton.addEventListener("click", () => {
+      midiEnableButton.innerText = "(Requesting permission)";
+      midiEnableButton.disabled = true;
+      navigator.requestMIDIAccess({
+        software: true,
+      }).then((midiAccess) => {
+        midiEnableButton.innerText = "(MIDI enabled)";
+        midiDevicesDropdown.innerHTML = "";
+        let option = document.createElement("option");
+        option.value = "";
+        option.innerText = "(please select a device)";
+        midiDevicesDropdown.appendChild(option);
+        midiDevicesDropdown.required = true;
+        for (let device of midiAccess.outputs.values()) {
+          option = document.createElement("option");
+          option.value = midiDevices.length;
+          option.innerText = device.name + " (output)";
+          midiDevicesDropdown.appendChild(option);
+          midiDevices.push(device);
+        }
+        midiDevicesDropdown.onchange = () => {
+          midiDeviceConnectButton.disabled = (midiDevicesDropdown.value === "");
+        };
+        midiDevicesDropdown.disabled = false;
+        midiDevicesDropdown.focus();
+      }).catch((error) => {
+        midiEnableButton.innerText = "(Can't enable MIDI)";
+        console.log(error);
+      });
+    });
+    midiDeviceConnectButton.addEventListener("click", () => {
+      midiDeviceConnectButton.disabled = true;
+      midiDevicesDropdown.disabled = true;
+      midiOptionsZone.disabled = true;
+      if (midiOpenDevice) {
+        midiDeviceConnectButton.innerText = "(disconnecting)";
+        midiOpenDevice.close().then(() => {
+          midiDeviceConnectButton.disabled = false;
+          midiDeviceConnectButton.innerText = "Connect";
+          midiDevicesDropdown.disabled = false;
+        }).catch((e) => {
+          alert("Couldn't close MIDI device?! " + e);
+        });
+        midiOpenDevice = null;
+      } else {
+        midiDeviceConnectButton.innerText = "(connecting)";
+        let newDevice = midiDevices[midiDevicesDropdown.value];
+        newDevice.open().then(() => {
+          midiOpenDevice = newDevice;
+          midiDeviceConnectButton.disabled = false;
+          midiDeviceConnectButton.innerText = "Disconnect";
+          midiOptionsZone.disabled = false;
+        }).catch((e) => {
+          alert("Could not connect to MIDI device: " + e);
+          midiDeviceConnectButton.disabled = false;
+          midiDeviceConnectButton.innerText = "Connect";
+          midiDevicesDropdown.disabled = false;
+        });
+      }
+    });
+  }
+
+  // MIDI options
+  $("#midi-bass-channel").oninput = $("#midi-bass-channel").onchange = (e) => {
+    $("#midi-bass-channel-value").innerText = (+e.target.value) + 1;
+  };
+  $("#midi-chord-channel").oninput = $("#midi-chord-channel").onchange = (e) => {
+    $("#midi-chord-channel-value").innerText = (+e.target.value) + 1;
+  };
+  $("#midi-bass-octave").value = 2; // reset so it matches currentBassMIDINote
+  $("#midi-bass-octave-value").innerText = 2;
+  $("#midi-bass-octave").oninput = $("#midi-bass-octave").onchange = (e) => {
+    $("#midi-bass-octave-value").innerText = +e.target.value;
+  };
+  $("#midi-chord-octave").value = 4;
+  $("#midi-chord-octave-value").innerText = 4;
+  $("#midi-chord-octave").oninput = $("#midi-chord-octave").onchange = (e) => {
+    $("#midi-chord-octave-value").innerText = +e.target.value;
+  };
+  $("#midi-chord-range-start").oninput = $("#midi-chord-range-start").onchange = (e) => {
+    $("#midi-chord-range-start-value").innerText = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"][+e.target.value + 9];
+  };
+  $("#midi-chord-range-size").oninput = $("#midi-chord-range-size").onchange = (e) => {
+    $("#midi-chord-range-size-value").innerText = +e.target.value;
+  };
+  $("#midi-pc-send-bass").addEventListener("click", () => {
+    let channel = $("#midi-bass-channel").value;
+    let programNumber = $("#midi-pc").value;
+    midiOpenDevice.send([0xC0 | (channel & 0xF), programNumber & 0x7F]);
+  });
+  $("#midi-pc-send-chord").addEventListener("click", () => {
+    let channel = $("#midi-chord-channel").value;
+    let programNumber = $("#midi-pc").value;
+    midiOpenDevice.send([0xC0 | (channel & 0xF), programNumber & 0x7F]);
   });
 });

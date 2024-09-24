@@ -191,3 +191,11 @@ label[for="settings"] {
 #horizontal-chords:checked ~ .controls .chord-column {
   flex-direction: row;
 }
+
+fieldset {
+  display: inline-block;
+}
+#midi-options {
+  border: 0;
+  padding: 0;
+}

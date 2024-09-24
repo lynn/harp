@@ -82,6 +82,174 @@
     <label for="hue">Hue</label>
     <input type="range" id="hue" min="-180" max="180" value="0" step="1">
     <br>
+    <fieldset id="midi-setup">
+    <legend>Output to MIDI device <button id="midi-enable" disabled>Enable</button></legend>
+      <select id="midi-devices" disabled><option>(please enable MIDI)</option></select>
+      <button id="midi-device-connect" disabled>Connect</button>
+      <br>
+      <fieldset id="midi-options" disabled>
+        <label for="midi-bass-channel">Bass channel</label>
+        <input type="range" id="midi-bass-channel" min="0" max="15" value="0" step="1">
+        <output id="midi-bass-channel-value">1</output>
+        <br>
+        <label for="midi-chord-channel">Chord channel</label>
+        <input type="range" id="midi-chord-channel" min="0" max="15" value="1" step="1">
+        <output id="midi-chord-channel-value">2</output>
+        <br>
+        <label for="midi-bass-octave">Bass octave</label>
+        <input type="range" id="midi-bass-octave" min="-1" max="8" value="2" step="1">
+        <output id="midi-bass-octave-value">1</output>
+        <br>
+        <label for="midi-chord-octave">Chord octave</label>
+        <input type="range" id="midi-chord-octave" min="-1" max="8" value="4" step="1">
+        <output id="midi-chord-octave-value">2</output>
+        <br>
+        <label for="midi-chord-range-start">Chord range start</label>
+        <input type="range" id="midi-chord-range-start" min="-9" max="2" value="-9" step="1">
+        <output id="midi-chord-range-start-value">C</output>
+        <br>
+        <label for="midi-chord-range-size">Chord range size</label>
+        <input type="range" id="midi-chord-range-size" min="12" max="24" value="16" step="1">
+        <output id="midi-chord-range-size-value">16</output>
+        <br>
+        <br>
+        <label for="midi-pc">Program #:</label>
+        <select id="midi-pc">
+          <option value="0">1 [GM: Acoustic Grand Piano]</option>
+          <option value="1">2 [GM: Bright Acoustic Piano]</option>
+          <option value="2">3 [GM: Electric Grand Piano]</option>
+          <option value="3">4 [GM: Honky-tonk Piano]</option>
+          <option value="4">5 [GM: Electric Piano 1]</option>
+          <option value="5">6 [GM: Electric Piano 2]</option>
+          <option value="6">7 [GM: Harpsichord]</option>
+          <option value="7">8 [GM: Clavi]</option>
+          <option value="8">9 [GM: Celesta]</option>
+          <option value="9">10 [GM: Glockenspiel]</option>
+          <option value="10">11 [GM: Music Box]</option>
+          <option value="11">12 [GM: Vibraphone]</option>
+          <option value="12">13 [GM: Marimba]</option>
+          <option value="13">14 [GM: Xylophone]</option>
+          <option value="14">15 [GM: Tubular Bells]</option>
+          <option value="15">16 [GM: Dulcimer]</option>
+          <option value="16">17 [GM: Drawbar Organ]</option>
+          <option value="17">18 [GM: Percussive Organ]</option>
+          <option value="18">19 [GM: Rock Organ]</option>
+          <option value="19">20 [GM: Church Organ]</option>
+          <option value="20">21 [GM: Reed Organ]</option>
+          <option value="21">22 [GM: Accordion]</option>
+          <option value="22">23 [GM: Harmonica]</option>
+          <option value="23">24 [GM: Tango Accordion]</option>
+          <option value="24">25 [GM: Acoustic Guitar (nylon)]</option>
+          <option value="25">26 [GM: Acoustic Guitar (steel)]</option>
+          <option value="26">27 [GM: Electric Guitar (jazz)]</option>
+          <option value="27">28 [GM: Electric Guitar (clean)]</option>
+          <option value="28">29 [GM: Electric Guitar (muted)]</option>
+          <option value="29">30 [GM: Overdriven Guitar]</option>
+          <option value="30">31 [GM: Distortion Guitar]</option>
+          <option value="31">32 [GM: Guitar harmonics]</option>
+          <option value="32">33 [GM: Acoustic Bass]</option>
+          <option value="33">34 [GM: Electric Bass (finger)]</option>
+          <option value="34">35 [GM: Electric Bass (pick)]</option>
+          <option value="35">36 [GM: Fretless Bass]</option>
+          <option value="36">37 [GM: Slap Bass 1]</option>
+          <option value="37">38 [GM: Slap Bass 2]</option>
+          <option value="38">39 [GM: Synth Bass 1]</option>
+          <option value="39">40 [GM: Synth Bass 2]</option>
+          <option value="40">41 [GM: Violin]</option>
+          <option value="41">42 [GM: Viola]</option>
+          <option value="42">43 [GM: Cello]</option>
+          <option value="43">44 [GM: Contrabass]</option>
+          <option value="44">45 [GM: Tremolo Strings]</option>
+          <option value="45">46 [GM: Pizzicato Strings]</option>
+          <option value="46">47 [GM: Orchestral Harp]</option>
+          <option value="47">48 [GM: Timpani]</option>
+          <option value="48">49 [GM: String Ensemble 1]</option>
+          <option value="49">50 [GM: String Ensemble 2]</option>
+          <option value="50">51 [GM: SynthStrings 1]</option>
+          <option value="51">52 [GM: SynthStrings 2]</option>
+          <option value="52">53 [GM: Choir Aahs]</option>
+          <option value="53">54 [GM: Voice Oohs]</option>
+          <option value="54">55 [GM: Synth Voice]</option>
+          <option value="55">56 [GM: Orchestra Hit]</option>
+          <option value="56">57 [GM: Trumpet]</option>
+          <option value="57">58 [GM: Trombone]</option>
+          <option value="58">59 [GM: Tuba]</option>
+          <option value="59">60 [GM: Muted Trumpet]</option>
+          <option value="60">61 [GM: French Horn]</option>
+          <option value="61">62 [GM: Brass Section]</option>
+          <option value="62">63 [GM: SynthBrass 1]</option>
+          <option value="63">64 [GM: SynthBrass 2]</option>
+          <option value="64">65 [GM: Soprano Sax]</option>
+          <option value="65">66 [GM: Alto Sax]</option>
+          <option value="66">67 [GM: Tenor Sax]</option>
+          <option value="67">68 [GM: Baritone Sax]</option>
+          <option value="68">69 [GM: Oboe]</option>
+          <option value="69">70 [GM: English Horn]</option>
+          <option value="70">71 [GM: Bassoon]</option>
+          <option value="71">72 [GM: Clarinet]</option>
+          <option value="72">73 [GM: Piccolo]</option>
+          <option value="73">74 [GM: Flute]</option>
+          <option value="74">75 [GM: Recorder]</option>
+          <option value="75">76 [GM: Pan Flute]</option>
+          <option value="76">77 [GM: Blown Bottle]</option>
+          <option value="77">78 [GM: Shakuhachi]</option>
+          <option value="78">79 [GM: Whistle]</option>
+          <option value="79">80 [GM: Ocarina]</option>
+          <option value="80">81 [GM: Lead 1 (square)]</option>
+          <option value="81">82 [GM: Lead 2 (sawtooth)]</option>
+          <option value="82">83 [GM: Lead 3 (calliope)]</option>
+          <option value="83">84 [GM: Lead 4 (chiff)]</option>
+          <option value="84">85 [GM: Lead 5 (charang)]</option>
+          <option value="85">86 [GM: Lead 6 (voice)]</option>
+          <option value="86">87 [GM: Lead 7 (fifths)]</option>
+          <option value="87">88 [GM: Lead 8 (bass + lead)]</option>
+          <option value="88">89 [GM: Pad 1 (new age)]</option>
+          <option value="89">90 [GM: Pad 2 (warm)]</option>
+          <option value="90">91 [GM: Pad 3 (polysynth)]</option>
+          <option value="91">92 [GM: Pad 4 (choir)]</option>
+          <option value="92">93 [GM: Pad 5 (bowed)]</option>
+          <option value="93">94 [GM: Pad 6 (metallic)]</option>
+          <option value="94">95 [GM: Pad 7 (halo)]</option>
+          <option value="95">96 [GM: Pad 8 (sweep)]</option>
+          <option value="96">97 [GM: FX 1 (rain)]</option>
+          <option value="97">98 [GM: FX 2 (soundtrack)]</option>
+          <option value="98">99 [GM: FX 3 (crystal)]</option>
+          <option value="99">100 [GM: FX 4 (atmosphere)]</option>
+          <option value="100">101 [GM: FX 5 (brightness)]</option>
+          <option value="101">102 [GM: FX 6 (goblins)]</option>
+          <option value="102">103 [GM: FX 7 (echoes)]</option>
+          <option value="103">104 [GM: FX 8 (sci-fi)]</option>
+          <option value="104">105 [GM: Sitar]</option>
+          <option value="105">106 [GM: Banjo]</option>
+          <option value="106">107 [GM: Shamisen]</option>
+          <option value="107">108 [GM: Koto]</option>
+          <option value="108">109 [GM: Kalimba]</option>
+          <option value="109">110 [GM: Bag pipe]</option>
+          <option value="110">111 [GM: Fiddle]</option>
+          <option value="111">112 [GM: Shanai]</option>
+          <option value="112">113 [GM: Tinkle Bell]</option>
+          <option value="113">114 [GM: Agogo]</option>
+          <option value="114">115 [GM: Steel Drums]</option>
+          <option value="115">116 [GM: Woodblock]</option>
+          <option value="116">117 [GM: Taiko Drum]</option>
+          <option value="117">118 [GM: Melodic Tom]</option>
+          <option value="118">119 [GM: Synth Drum]</option>
+          <option value="119">120 [GM: Reverse Cymbal]</option>
+          <option value="120">121 [GM: Guitar Fret Noise]</option>
+          <option value="121">122 [GM: Breath Noise]</option>
+          <option value="122">123 [GM: Seashore]</option>
+          <option value="123">124 [GM: Bird Tweet]</option>
+          <option value="124">125 [GM: Telephone Ring]</option>
+          <option value="125">126 [GM: Helicopter]</option>
+          <option value="126">127 [GM: Applause]</option>
+          <option value="127">128 [GM: Gunshot]</option>
+        </select>
+        <br>
+        <button id="midi-pc-send-bass">Change for bass</button>
+        <button id="midi-pc-send-chord">Change for chord</button>
+      </fieldset>
+    </fieldset>
+    <br>
     By <a href="https://twitter.com/chordbug">Lynn</a> and <a href="https://github.com/lynn/harp/graphs/contributors">friends</a>.
     <br>
     <a href="https://ko-fi.com/chordbug">Donate</a> / <a href="https://github.com/lynn/harp/issues">Report issue</a>
