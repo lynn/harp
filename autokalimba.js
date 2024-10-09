@@ -230,6 +230,48 @@ function recomputeKeyLabels() {
   });
 }
 
+/*
+ * Function to get the next key pressed after a click
+ *
+ * isChord: If it's a chord or a bass
+ * keyToChange: The key to change
+ * chordKb: The keys for the chords
+ * bassKb: The keys for the bass
+ * setBassKb: Function that change the value of bassKb
+ * setChordKb: Function that change the value of chordKb
+ */
+const getNextKeyPress = (isChord, keyToChange, chordKb, bassKb, setBassKb, setChordKb) => {
+  const listenerKeyPress = (e) => {
+    if (keyToChange === 'Escape') return;
+
+    // Update the localStorage
+    let tempKeys = isChord ? localStorage.getItem('chordKb') ?? chordKb : localStorage.getItem("bassKb") ?? bassKb;
+    tempKeys = tempKeys.split``;
+    tempKeys[keyToChange] = e.key;
+    tempKeys = tempKeys.join``;
+    localStorage.setItem(isChord ? 'chordKb' :  'bassKb', tempKeys);
+
+    // Change the global value
+    if (isChord) {
+      setChordKb(tempKeys);
+    } else {
+      setBassKb(tempKeys);
+    }
+
+
+    // Update the HTML
+    const sections = $$("#change-keys-outer section .content-keys");
+    const elementToChange = sections[isChord].getElementsByClassName("button")[keyToChange];
+    elementToChange.onmouseover = () => elementToChange.innerHTML = e.key;
+    elementToChange.innerHTML = e.key;
+
+    // Remove event listener
+    window.removeEventListener('keypress', listenerKeyPress);
+  }
+  
+  window.addEventListener('keypress', listenerKeyPress);
+}
+
 window.addEventListener("DOMContentLoaded", (event) => {
   if (/harp/.test(window.location.href)) $(".refresh-link").remove();
   recomputeKeyLabels();
@@ -459,12 +501,63 @@ window.addEventListener("DOMContentLoaded", (event) => {
   }
 
   // const bassKb = "1qaz2wsx3edc";
-  const bassKb = "2wsx3edc4rfv";
-  const chordKb = "yuiophjkl;nm,./";
+  let bassKb = localStorage.getItem("bassKb") ?? "2wsx3edc4rfv";
+  let chordKb = localStorage.getItem("chordKb") ?? "yuiophjkl;nm,./";
+
+  // Add the notes to the change keys
+  const bassNotes = ["Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "F#"];
+  const chords = ["Δ9", "m9", "7s", "7b8", "13s", "Δ", "m7", "7", "7#5", "13", "6", "m6", "ø", "o", "II/"];
+
+  // Element that contains the keys
+  const sections = $$("#change-keys-outer section .content-keys");
+
+  // Get all buttons (bassNotes + chords)
+  const allButtons = [bassNotes, chords];
+
+  // Functions to change the value of bassKb and chordKb
+  // Theses functions are going to be used in another function
+  const setBassKb = (v) => bassKb = v;
+  const setChordKb = (v) => chordKb = v;
+
+
+  // Map each button to an HTML Element
+  allButtons.forEach((content, isChord) => {
+    const buttons = sections[isChord].getElementsByClassName('button');
+    content.forEach((e,i) => {
+      sections[isChord].innerHTML += `
+        <button
+          class="button"
+          onmouseover="this.innerHTML = '${(isChord ? chordKb : bassKb)[i]}'"
+          onmouseout="this.innerHTML = '${e}'"
+        >
+          ${e}
+        </button>`;
+
+
+      // Add onclick to the button
+      setTimeout(() => 
+        buttons[i].addEventListener('click', () =>
+          getNextKeyPress(isChord, i, chordKb, bassKb, setBassKb, setChordKb)
+        ),
+        10
+      );
+    });
+  });
+
+  // Section that keeps track of opening or closing the settings of keys 
+  const changeKeys = $("#change-keys")
+  changeKeys.addEventListener("change", (e) => {
+    $("#change-keys-outer").style.display = e.target.checked ? "block" : "none";
+  });
+
+
+
+
   let bassKbIndex = 0;
   let fifthIndex = -1;
   let keysDown = {};
-  document.addEventListener("keydown", (e) => {
+
+  const keyDownEventListener = (e) => {
     if (e.repeat) return;
     if (keysDown[e.key] === true) return;
     keysDown[e.key] = true;
@@ -478,6 +571,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
       e.preventDefault();
       return;
     }
+
 
     // "7" and "8" step the base slider
     if (e.key === "7") {
@@ -547,7 +641,10 @@ window.addEventListener("DOMContentLoaded", (event) => {
         })
       );
     }
-  });
+  };
+
+  document.addEventListener("keydown", keyDownEventListener);
+
   document.addEventListener("keyup", (e) => {
     keysDown[e.key] = false;
     if (e.key === "Shift") {
