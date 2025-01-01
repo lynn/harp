@@ -3,16 +3,16 @@ import { signal, type Signal } from "@preact/signals";
 const ploverHid = { usagePage: 0xff50, usage: 0x4c56 };
 
 const stenoTargets = [
-	"db", // S
-	"bb", // T
-	"eb", // K
-	"c", // P
-	"f", // W
-	"d", // H
-	"g", // R
-	"a", // A
-	"e", // O
-	"b", // *
+	"eb", // S
+	"c", // T
+	"f", // K
+	"d", // P
+	"g", // W
+	"e", // H
+	"a", // R
+	"b", // A
+	"gb", // O
+	"split-last", // *
 	"s-3", // -E
 	"s-8", // -U
 	"s-5", // -F
@@ -25,7 +25,9 @@ const stenoTargets = [
 	"s-4", // -S
 	"s-1", // -D
 	"s-6", // -Z
-	"ab", // #
+	"bb", // #
+	"ab", // ^
+	"db", // +
 ];
 
 // const stenoAlphabet = "STKPWHRAO*EUFRPBLGTSDZ#";
@@ -54,7 +56,8 @@ export class StenoKeyboard {
 
 	processInputReport(report: HIDInputReportEvent) {
 		const bits = report.data.getUint32(0);
-		for (let i = 0; i < 23; i++) {
+		console.log(bits.toString(2));
+		for (let i = 0; i < 32; i++) {
 			const is = (bits >> (31 - i)) & 1;
 			const was = (this.last >> (31 - i)) & 1;
 			if (is && !was) {

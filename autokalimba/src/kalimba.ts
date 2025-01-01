@@ -38,9 +38,10 @@ const chordTargetDescriptions: [string, TargetDescription][] = chords.map(
 	(chord) => [chord.name, { type: "chord", semitones: chord.semitones }],
 );
 
-const scaleDegreeTargetDescriptions: [string, TargetDescription][] = Array(12)
-	.fill(undefined)
-	.map((_, i) => [`s-${i}`, { type: "chord", semitones: [i] }]);
+const scaleDegreeTargetDescriptions: [string, TargetDescription][] = Array.from(
+	{ length: 12 },
+	(_, i) => [`s-${i}`, { type: "chord", semitones: [i] }],
+);
 
 const targetDescriptions: [string, TargetDescription][] = [
 	...bassTargetDescriptions,

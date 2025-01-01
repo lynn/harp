@@ -39,21 +39,23 @@ export function App() {
 			<div className="flex w-full h-full justify-between">
 				{kalimba.displayLayout.value === "steno" ? (
 					<div className="left-4 right-4 bottom-2 flex flex-row items-end justify-between w-full p-4">
-						<div className="grid grid-cols-5 grid-rows-4 gap-1">
+						<div className="grid grid-cols-6 grid-rows-4 gap-1">
 							<Button bass={true} label={ab} targetName="ab" />
 							<Button bass={true} label={bb} targetName="bb" />
 							<Button bass={true} label={"C"} targetName="c" />
 							<Button bass={true} label={"D"} targetName="d" />
-							<Button bass={true} label={"B"} targetName="b" />
+							<Button bass={true} label={"E"} targetName="e" />
+							<Button bass={true} label={"*"} targetName="split-last" />
 							<Button bass={true} label={db} targetName="db" />
 							<Button bass={true} label={eb} targetName="eb" />
 							<Button bass={true} label={"F"} targetName="f" />
 							<Button bass={true} label={"G"} targetName="g" />
-							<Button bass={true} label={"B"} targetName="b" />
-							<div className="col-span-5" />
-							<div className="col-span-3" />
 							<Button bass={true} label={"A"} targetName="a" />
-							<Button bass={true} label={"E"} targetName="e" />
+							<Button bass={true} label={"*"} targetName="split-last" />
+							<div className="col-span-6" />
+							<div className="col-span-4" />
+							<Button bass={true} label={"B"} targetName="b" />
+							<Button bass={true} label={gb} targetName="gb" />
 						</div>
 						<input
 							type="range"
@@ -67,13 +69,13 @@ export function App() {
 							}}
 						/>
 						<div className="grid grid-cols-6 grid-rows-4 gap-1">
-							<Button bass={true} label={"B"} targetName="b" />
+							<Button bass={true} label={"*"} targetName="split-last" />
 							<Button bass={false} label={"4"} targetName={"s-5"} />
 							<Button bass={false} label={"5"} targetName={"s-7"} />
 							<Button bass={false} label={"6"} targetName={"s-9"} />
 							<Button bass={false} label={"7"} targetName={"s-11"} />
 							<Button bass={false} label={"♯8"} targetName={"s-1"} />
-							<Button bass={true} label={"B"} targetName="b" />
+							<Button bass={true} label={"*"} targetName="split-last" />
 							<Button bass={false} label={"♭7"} targetName={"s-10"} />
 							<Button bass={false} label={"1"} targetName={"s-0"} />
 							<Button bass={false} label={"2"} targetName={"s-2"} />
