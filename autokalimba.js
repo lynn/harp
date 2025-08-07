@@ -2,7 +2,7 @@ const $ = (x) => document.querySelector(x);
 const $$ = (x) => document.querySelectorAll(x);
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
-const ctx = new AudioContext();
+const ctx = new AudioContext({ latencyHint: "interactive" });
 const mix = ctx.createGain();
 const pre = ctx.createGain();
 // Default values except threshold and knee
@@ -113,6 +113,7 @@ const instruments = {
 };
 
 function loadInstrument(instrument) {
+  console.log(instrument);
   if (!instrument) return;
   sampleBuffers.length = 0;
   instrument.samples.map((s, i) => {
@@ -229,7 +230,7 @@ function recomputeKeyLabels() {
   });
 }
 
-window.addEventListener("DOMContentLoaded", (event) => {
+window.addEventListener("DOMContentLoaded", async (event) => {
   if (/harp/.test(window.location.href)) $(".refresh-link").remove();
   recomputeKeyLabels();
 
@@ -300,6 +301,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
   };
   const bass = $(".bass");
   const bassButtons = [...$$(".bass-button")];
+
 
   for (const b of bassButtons) {
     // Prevent selecting them with long taps:
@@ -466,113 +468,113 @@ window.addEventListener("DOMContentLoaded", (event) => {
   let bassKbIndex = 0;
   let fifthIndex = -1;
   let keysDown = {};
-  document.addEventListener("keydown", (e) => {
-    if (e.repeat) return;
-    if (keysDown[e.key] === true) return;
-    keysDown[e.key] = true;
-    if (e.key === "Shift") {
-      bend = true;
-      recalc();
-      return;
-    }
-    // if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.ctrlKey || e.metaKey || e.altKey) {
-      e.preventDefault();
-      return;
-    }
+  // document.addEventListener("keydown", (e) => {
+  //   if (e.repeat) return;
+  //   if (keysDown[e.key] === true) return;
+  //   keysDown[e.key] = true;
+  //   if (e.key === "Shift") {
+  //     bend = true;
+  //     recalc();
+  //     return;
+  //   }
+  //   // if (e.ctrlKey || e.metaKey || e.altKey) return;
+  //   if (e.ctrlKey || e.metaKey || e.altKey) {
+  //     e.preventDefault();
+  //     return;
+  //   }
 
-    // "7" and "8" step the base slider
-    if (e.key === "7") {
-      $("#base").stepDown();
-      $("#base").dispatchEvent(new Event("change"));
-      return;
-    }
-    if (e.key === "8") {
-      $("#base").stepUp();
-      $("#base").dispatchEvent(new Event("change"));
-      return;
-    }
+  //   // "7" and "8" step the base slider
+  //   if (e.key === "7") {
+  //     $("#base").stepDown();
+  //     $("#base").dispatchEvent(new Event("change"));
+  //     return;
+  //   }
+  //   if (e.key === "8") {
+  //     $("#base").stepUp();
+  //     $("#base").dispatchEvent(new Event("change"));
+  //     return;
+  //   }
 
-    if (e.key === "[" || e.key === "]") {
-      const delta = e.key === "[" ? -1 : 1;
-      $("#transpose").value = Number($("#transpose").value) + delta;
-      $("#transpose").onchange({
-        target: { value: Number($("#transpose").value) },
-      });
-      return;
-    }
-    if (e.key === "{" || e.key === "}") {
-      const delta = e.key === "{" ? -1 : 1;
-      $("#sharps").value = Number($("#sharps").value) + delta;
-      $("#sharps").onchange({
-        target: { value: Number($("#sharps").value) },
-      });
-      return;
-    }
+  //   if (e.key === "[" || e.key === "]") {
+  //     const delta = e.key === "[" ? -1 : 1;
+  //     $("#transpose").value = Number($("#transpose").value) + delta;
+  //     $("#transpose").onchange({
+  //       target: { value: Number($("#transpose").value) },
+  //     });
+  //     return;
+  //   }
+  //   if (e.key === "{" || e.key === "}") {
+  //     const delta = e.key === "{" ? -1 : 1;
+  //     $("#sharps").value = Number($("#sharps").value) + delta;
+  //     $("#sharps").onchange({
+  //       target: { value: Number($("#sharps").value) },
+  //     });
+  //     return;
+  //   }
 
-    const i = bassKb.indexOf(e.key.toLowerCase());
-    if (i >= 0) {
-      bassKbIndex = i;
-      if (fifthIndex === bassKbIndex) {
-        stop(999 + fifthIndex);
-        fifthIndex = -1;
-      }
-      const target = bassButtons[bassKbIndex];
-      target.dispatchEvent(
-        new PointerEvent("pointerdown", {
-          pointerId: 999 + bassKbIndex,
-          isPrimary: true,
-        }),
-      );
-    }
+  //   const i = bassKb.indexOf(e.key.toLowerCase());
+  //   if (i >= 0) {
+  //     bassKbIndex = i;
+  //     if (fifthIndex === bassKbIndex) {
+  //       stop(999 + fifthIndex);
+  //       fifthIndex = -1;
+  //     }
+  //     const target = bassButtons[bassKbIndex];
+  //     target.dispatchEvent(
+  //       new PointerEvent("pointerdown", {
+  //         pointerId: 999 + bassKbIndex,
+  //         isPrimary: true,
+  //       }),
+  //     );
+  //   }
 
-    if (e.key === " ") {
-      stop(999 + bassKbIndex);
-      forceFifthInBass = true;
-      fifthIndex = bassKbIndex;
-      bassButtons[bassKbIndex].dispatchEvent(
-        new PointerEvent("pointerdown", {
-          pointerId: 999 + bassKbIndex,
-          isPrimary: true,
-        }),
-      );
-      forceFifthInBass = false;
-    }
+  //   if (e.key === " ") {
+  //     stop(999 + bassKbIndex);
+  //     forceFifthInBass = true;
+  //     fifthIndex = bassKbIndex;
+  //     bassButtons[bassKbIndex].dispatchEvent(
+  //       new PointerEvent("pointerdown", {
+  //         pointerId: 999 + bassKbIndex,
+  //         isPrimary: true,
+  //       }),
+  //     );
+  //     forceFifthInBass = false;
+  //   }
 
-    const j = chordKb.indexOf(e.key.toLowerCase());
-    if (j >= 0) {
-      const target = chordButtons[j];
-      target.dispatchEvent(
-        new PointerEvent("pointerdown", {
-          pointerId: 1999 + j,
-          isPrimary: true,
-        }),
-      );
-    }
-  });
-  document.addEventListener("keyup", (e) => {
-    keysDown[e.key] = false;
-    if (e.key === "Shift") {
-      bend = false;
-      recalc();
-      return;
-    }
+  //   const j = chordKb.indexOf(e.key.toLowerCase());
+  //   if (j >= 0) {
+  //     const target = chordButtons[j];
+  //     target.dispatchEvent(
+  //       new PointerEvent("pointerdown", {
+  //         pointerId: 1999 + j,
+  //         isPrimary: true,
+  //       }),
+  //     );
+  //   }
+  // });
+  // document.addEventListener("keyup", (e) => {
+  //   keysDown[e.key] = false;
+  //   if (e.key === "Shift") {
+  //     bend = false;
+  //     recalc();
+  //     return;
+  //   }
 
-    if (e.key === " ") {
-      if (fifthIndex >= 0) {
-        stop(999 + fifthIndex);
-      }
-    }
+  //   if (e.key === " ") {
+  //     if (fifthIndex >= 0) {
+  //       stop(999 + fifthIndex);
+  //     }
+  //   }
 
-    const i = bassKb.indexOf(e.key.toLowerCase());
-    if (i >= 0 && i !== fifthIndex) {
-      stop(999 + i);
-    }
-    const j = chordKb.indexOf(e.key.toLowerCase());
-    if (j >= 0) {
-      stop(1999 + j);
-    }
-  });
+  //   const i = bassKb.indexOf(e.key.toLowerCase());
+  //   if (i >= 0 && i !== fifthIndex) {
+  //     stop(999 + i);
+  //   }
+  //   const j = chordKb.indexOf(e.key.toLowerCase());
+  //   if (j >= 0) {
+  //     stop(1999 + j);
+  //   }
+  // });
   // Stop all keys when window loses focus
   window.addEventListener("blur", () => {
     keysDown = {};
@@ -593,9 +595,9 @@ window.addEventListener("DOMContentLoaded", (event) => {
     slider.blur();
   });
 
-  for (const el of $$("input, select")) {
+  for (const el of [...$$("input, select")]) {
     // Don't remember the settings toggle itself.
-    if (el.id === "settings") return;
+    if (el.id === "settings") continue;
     const key = `autokalimba-${el.id}`;
     let value = window.localStorage.getItem(key);
     if (el.id === "select-instrument" && !(value in instruments)) {
@@ -618,4 +620,127 @@ window.addEventListener("DOMContentLoaded", (event) => {
       );
     });
   }
+
+  const ploverHid = { usagePage: 0xff50, usage: 0x4c56 };
+  const stenoAlphabet = "STKPWHRAO*EUFRPBLGTSDZ#";
+  //                     01234567890123456789012
+  let last = 0;
+  let activeDevice = null;
+  let memory = {};
+  const stenoOscs = {};
+  let bassOsc = null;
+
+  async function connect() {
+    if (activeDevice) {
+      activeDevice.oninputreport = undefined;
+      await activeDevice.close();
+    }
+    activeDevice = (await navigator.hid.requestDevice({ filters: [ploverHid] }))[0];
+    if (activeDevice) {
+      await activeDevice.open();
+      activeDevice.oninputreport = oninputreport;
+    }
+  }
+
+  function oninputreport(report) {
+    const bits = report.data.getUint32(0);
+    if (bits && !last) memory = {};
+    let steno = "";
+    let vowel = false;
+    if ((bits & 0xffc00200) === 0) {
+      // Stop bass
+      if (bassOsc) {
+        bassOsc.gainNode.gain.setTargetAtTime(0, ctx.currentTime + 0.05, 0.01);
+        bassOsc.stop(ctx.currentTime + 0.2);
+      }
+      bassOsc = null;
+    } else {
+      console.log(bits.toString(16));
+      const notes = [
+        0x80000000 & 0xff000200,
+        0x200,
+        // 0x80000200 & 0xff000200,
+        0x20000000,
+        0x40000000,
+        // 0x60000000,
+        0x8000000,
+        0x10000000,
+        // 0x18000000,
+        0x2000000,
+        0x4000000,
+        // 0x6000000,
+        0x1000000,
+        0x800000,
+        0x400000,
+      ];
+      const fifths = notes.indexOf(bits & 0xffc00200)
+      if (fifths > -1) {
+        const freq = bassFreq(fifths * 7 + 4);
+        if (bassOsc) {
+          if (bits & ~last)
+            bassOsc.playbackRate.value = freq / bassOsc.autokalimbaSampleBaseFreq;
+        } else {
+          bassOsc = makeOsc(freq, 0.5 * bassGain, 0, false);
+        }
+        currentBass = freq;
+        // Correct chord voicing to this new bass note
+        if (bits & ~last)
+
+          for (let j = 10; j <= 21; j++) {
+            const osc = stenoOscs[j];
+            if (osc) osc.playbackRate.value = chordFreq(((j ^ 1) - 2) * 7 % 12) / osc.autokalimbaSampleBaseFreq;
+          }
+      }
+    }
+
+    for (let i = 0; i < 23; i++) {
+      const is = (bits >> (31 - i)) & 1;
+      const was = (last >> (31 - i)) & 1;
+      if (is && !was) {
+        if (i >= 10 && i <= 21) {
+          const freq = chordFreq(((i ^ 1) - 2) * 7 % 12);
+          stenoOscs[i] = makeOsc(freq, 0.2 * chordGain, 0, false);
+        }
+      }
+      if (was && !is) {
+        if (i > 8 && i < 22) {
+          const osc = stenoOscs[i];
+          if (osc) {
+            osc.gainNode.gain.setTargetAtTime(0, ctx.currentTime + 0.05, 0.01);
+            osc.stop(ctx.currentTime + 0.2);
+          }
+          delete stenoOscs[i];
+        }
+      }
+
+      // document.getElementsByName("key" + i).forEach((e) => {
+      //   e.dataset.lit = bit ? 1 : memory[i] ? 2 : 0;
+      // });
+      if (memory[i]) {
+        if (i >= 12 && !vowel) { steno += "-"; vowel = true }
+
+        steno = i === 22 ? `#${steno}` : steno + stenoAlphabet[i];
+        vowel ||= i >= 7 && i <= 11;
+      }
+    }
+    last = bits;
+  }
+
+  document.body.onclick = () => {
+    if (!activeDevice) connect();
+  }
+
+  window.onload = async () => {
+    const devices = await navigator.hid.getDevices();
+    for (const device of devices) {
+      for (const collection of device.collections) {
+        if (collection.usage === ploverHid.usage && collection.usagePage === ploverHid.usagePage) {
+          await device.open();
+          device.oninputreport = oninputreport;
+          activeDevice = device;
+          break;
+        }
+      }
+    }
+  };
 });

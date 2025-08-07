@@ -163,7 +163,7 @@ export class Kalimba {
 		});
 		this.mix.connect(compressor);
 		compressor.connect(ctx.destination);
-		// this.loadInstrument(instruments.Rhodes);
+		this.loadInstrument(instruments.Rhodes);
 
 		this.stenoKeyboard = new StenoKeyboard(
 			this.pointerDown.bind(this),

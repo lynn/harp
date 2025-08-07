@@ -91,6 +91,15 @@ interface Chime {
 	delay: number;
 }
 
+export const echoPatch = {
+	attack: 0.2,
+	decay: 1.2,
+	echoes: [
+		{ minDelay: 0.5, maxDelay: 1.0, pitchFactor: 1, volumeFactor: 0.3 },
+		{ minDelay: 1.0, maxDelay: 2.0, pitchFactor: 2, volumeFactor: 0.1 },
+	],
+};
+
 export class OscillatorNote implements Note {
 	private chimes: Chime[] = [];
 	private wave: PeriodicWave;
